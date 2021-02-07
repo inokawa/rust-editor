@@ -14,8 +14,17 @@ fn clear_screen() -> Result<(), io::Error> {
     io::stdout().flush()
 }
 
-fn refresh_screen() -> Result<(), io::Error> {
-    clear_screen()
+fn draw_rows() {
+    for _ in 0..=24 {
+        print!("~\r\n");
+    }
+}
+
+fn refresh_screen() -> Result<(), Error> {
+    clear_screen()?;
+    draw_rows();
+    print!("\x1b[H");
+    Ok(())
 }
 
 fn process_key_press(input: &StdinRaw) -> Result<bool, Error> {
