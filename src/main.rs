@@ -1,9 +1,22 @@
 use rust_editor::{error::Error, input_unix::StdinRaw};
+use std::io::{self, Write};
 
 const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
 const EXIT: u8 = ctrl('q');
+
+fn clear_screen() -> Result<(), io::Error> {
+    // Clear screen
+    print!("\x1b[2J");
+    // Move cursor to left top
+    print!("\x1b[H");
+    io::stdout().flush()
+}
+
+fn refresh_screen() -> Result<(), io::Error> {
+    clear_screen()
+}
 
 fn process_key_press(input: &StdinRaw) -> Result<bool, Error> {
     for b in input.bytes() {
@@ -21,9 +34,10 @@ fn process_key_press(input: &StdinRaw) -> Result<bool, Error> {
 fn main() -> Result<(), Error> {
     let input = StdinRaw::new()?;
     loop {
+        refresh_screen()?;
         let quit = process_key_press(&input)?;
         if quit == true {
-            print!("quit\r\n");
+            clear_screen()?;
             break;
         }
     }
