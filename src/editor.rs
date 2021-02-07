@@ -13,12 +13,15 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(stdin: StdinRaw) -> Self {
-        let (screen_rows, screen_cols) = get_window_size().unwrap();
-        Editor {
-            input: stdin,
-            screen_rows,
-            screen_cols,
+    pub fn new(stdin: StdinRaw) -> Result<Self, Error> {
+        if let Some((screen_rows, screen_cols)) = get_window_size() {
+            Ok(Editor {
+                input: stdin,
+                screen_rows,
+                screen_cols,
+            })
+        } else {
+            Err(Error::Init)
         }
     }
 
