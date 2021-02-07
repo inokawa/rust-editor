@@ -1,6 +1,8 @@
 use super::{error::Error, input_unix::StdinRaw, output_unix::get_window_size};
 use std::io::{self, Write};
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
@@ -66,10 +68,21 @@ impl Editor {
     }
 
     fn draw_rows(&self, buf: &mut String) {
-        for y in 0..self.screen_rows {
-            buf.push_str("~");
+        let width = self.screen_cols;
+        let height = self.screen_rows;
+        for y in 0..height {
+            if y == height / 3 {
+                let message = format!("Kilo editor -- version {}", VERSION);
+                let padding = width.saturating_sub(message.len()) / 2;
+                let spaces = " ".repeat(padding.saturating_sub(1));
+                let mut message = format!("~{}{}", spaces, message);
+                message.truncate(width);
+                buf.push_str(&message);
+            } else {
+                buf.push_str("~");
+            }
             buf.push_str("\x1b[K");
-            if y < self.screen_rows - 1 {
+            if y < height - 1 {
                 buf.push_str("\r\n");
             }
         }
