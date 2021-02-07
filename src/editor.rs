@@ -6,60 +6,65 @@ const fn ctrl(c: char) -> u8 {
 }
 const EXIT: u8 = ctrl('q');
 
-fn clear_screen() -> Result<(), io::Error> {
-    // Clear screen
-    print!("\x1b[2J");
-    // Move cursor to left top
-    print!("\x1b[H");
-    io::stdout().flush()
-}
-
-fn draw_rows() {
-    if let Some((rows, _)) = get_window_size() {
-        for _ in 0..=rows {
-            print!("~\r\n");
-        }
-    }
-}
-
-fn refresh_screen() -> Result<(), Error> {
-    clear_screen()?;
-    draw_rows();
-    print!("\x1b[H");
-    Ok(())
-}
-
-fn process_key_press(input: &StdinRaw) -> Result<bool, Error> {
-    for b in input.bytes() {
-        let b = b?;
-        let c = b as char;
-        print!("{} ({:?})\r\n", c, b);
-        match b {
-            EXIT => return Ok(true),
-            _ => {}
-        }
-    }
-    Ok(false)
-}
-
 pub struct Editor {
     input: StdinRaw,
+    screen_rows: usize,
+    screen_cols: usize,
 }
 
 impl Editor {
     pub fn new(stdin: StdinRaw) -> Self {
-        Editor { input: stdin }
+        let (screen_rows, screen_cols) = get_window_size().unwrap();
+        Editor {
+            input: stdin,
+            screen_rows,
+            screen_cols,
+        }
     }
 
     pub fn run(&self) -> Result<(), Error> {
         loop {
-            refresh_screen()?;
-            let quit = process_key_press(&self.input)?;
+            self.refresh_screen()?;
+            let quit = self.process_key_press()?;
             if quit == true {
-                clear_screen()?;
+                self.clear_screen()?;
                 break;
             }
         }
-        return Ok(());
+        Ok(())
+    }
+
+    fn refresh_screen(&self) -> Result<(), Error> {
+        self.clear_screen()?;
+        self.draw_rows();
+        print!("\x1b[H");
+        Ok(())
+    }
+
+    fn process_key_press(&self) -> Result<bool, Error> {
+        for b in self.input.bytes() {
+            let b = b?;
+            let c = b as char;
+            print!("{} ({:?})\r\n", c, b);
+            match b {
+                EXIT => return Ok(true),
+                _ => {}
+            }
+        }
+        Ok(false)
+    }
+
+    fn clear_screen(&self) -> Result<(), io::Error> {
+        // Clear screen
+        print!("\x1b[2J");
+        // Move cursor to left top
+        print!("\x1b[H");
+        io::stdout().flush()
+    }
+
+    fn draw_rows(&self) {
+        for _ in 0..=self.screen_rows {
+            print!("~\r\n");
+        }
     }
 }
