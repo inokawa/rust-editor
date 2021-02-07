@@ -1,16 +1,18 @@
 use rust_editor::{error::Error, input_unix::StdinRaw};
 
-fn to_ctrl_byte(c: char) -> u8 {
+const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
+const EXIT: u8 = ctrl('q');
 
 fn process_key_press(input: &StdinRaw) -> Result<bool, Error> {
     for b in input.bytes() {
         let b = b?;
         let c = b as char;
         print!("{} ({:?})\r\n", c, b);
-        if b == to_ctrl_byte('q') {
-            return Ok(true);
+        match b {
+            EXIT => return Ok(true),
+            _ => {}
         }
     }
     Ok(false)
