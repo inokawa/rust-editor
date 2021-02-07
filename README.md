@@ -2,6 +2,12 @@
 
 wip
 
+An implementation of [kilo](https://github.com/antirez/kilo) text editor with Rust.
+
+Following the tutorial:
+
+- https://viewsourcecode.org/snaptoken/kilo/
+
 ## Start
 
 ```sh
