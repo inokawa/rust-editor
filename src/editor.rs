@@ -27,11 +27,10 @@ impl Editor {
 
     pub fn run(&self) -> Result<(), Error> {
         loop {
-            let mut buf = String::new();
-            self.refresh_screen(&mut buf)?;
-            print!("{}", buf);
+            self.refresh_screen()?;
             let quit = self.process_key_press()?;
             if quit == true {
+                let mut buf = String::new();
                 self.clear_screen(&mut buf);
                 print!("{}", buf);
                 break;
@@ -40,15 +39,17 @@ impl Editor {
         Ok(())
     }
 
-    fn refresh_screen(&self, buf: &mut String) -> Result<(), Error> {
+    fn refresh_screen(&self) -> Result<(), Error> {
+        let mut buf = String::new();
         buf.push_str("\x1b[?25l");
-        self.clear_screen(buf);
+        self.clear_screen(&mut buf);
 
-        self.draw_rows(buf);
+        self.draw_rows(&mut buf);
 
         buf.push_str("\x1b[H");
         buf.push_str("\x1b[?25h");
 
+        print!("{}", buf);
         Ok(())
     }
 
