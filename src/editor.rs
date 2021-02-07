@@ -61,8 +61,11 @@ impl Editor {
     }
 
     fn draw_rows(&self) {
-        for _ in 0..=self.screen_rows {
-            print!("~\r\n");
+        for y in 0..self.screen_rows {
+            print!("~");
+            if y < self.screen_rows - 1 {
+                print!("\r\n");
+            }
         }
     }
 }
