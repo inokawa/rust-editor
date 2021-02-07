@@ -8,6 +8,12 @@ Following the tutorial:
 
 - https://viewsourcecode.org/snaptoken/kilo/
 
+And thank you for other great implementations of kilo:
+
+- https://github.com/rhysd/kiro-editor
+- https://github.com/ilai-deutel/kibi
+- https://www.philippflenker.com/hecto/
+
 ## Start
 
 ```sh
