@@ -41,9 +41,14 @@ impl Editor {
     }
 
     fn refresh_screen(&self, buf: &mut String) -> Result<(), Error> {
+        buf.push_str("\x1b[?25l");
         self.clear_screen(buf);
+
         self.draw_rows(buf);
+
         buf.push_str("\x1b[H");
+        buf.push_str("\x1b[?25h");
+
         Ok(())
     }
 
