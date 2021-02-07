@@ -27,20 +27,23 @@ impl Editor {
 
     pub fn run(&self) -> Result<(), Error> {
         loop {
-            self.refresh_screen()?;
+            let mut buf = String::new();
+            self.refresh_screen(&mut buf)?;
+            print!("{}", buf);
             let quit = self.process_key_press()?;
             if quit == true {
-                self.clear_screen()?;
+                self.clear_screen(&mut buf);
+                print!("{}", buf);
                 break;
             }
         }
         Ok(())
     }
 
-    fn refresh_screen(&self) -> Result<(), Error> {
-        self.clear_screen()?;
-        self.draw_rows();
-        print!("\x1b[H");
+    fn refresh_screen(&self, buf: &mut String) -> Result<(), Error> {
+        self.clear_screen(buf);
+        self.draw_rows(buf);
+        buf.push_str("\x1b[H");
         Ok(())
     }
 
@@ -55,19 +58,18 @@ impl Editor {
         Ok(false)
     }
 
-    fn clear_screen(&self) -> Result<(), io::Error> {
+    fn clear_screen(&self, buf: &mut String) {
         // Clear screen
-        print!("\x1b[2J");
+        buf.push_str("\x1b[2J");
         // Move cursor to left top
-        print!("\x1b[H");
-        io::stdout().flush()
+        buf.push_str("\x1b[H");
     }
 
-    fn draw_rows(&self) {
+    fn draw_rows(&self, buf: &mut String) {
         for y in 0..self.screen_rows {
-            print!("~");
+            buf.push_str("~");
             if y < self.screen_rows - 1 {
-                print!("\r\n");
+                buf.push_str("\r\n");
             }
         }
     }
