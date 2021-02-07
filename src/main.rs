@@ -1,4 +1,4 @@
-use rust_editor::{error::Error, input_unix::StdinRaw};
+use rust_editor::{error::Error, input_unix::StdinRaw, output_unix::get_window_size};
 use std::io::{self, Write};
 
 const fn ctrl(c: char) -> u8 {
@@ -15,8 +15,10 @@ fn clear_screen() -> Result<(), io::Error> {
 }
 
 fn draw_rows() {
-    for _ in 0..=24 {
-        print!("~\r\n");
+    if let Some((rows, _)) = get_window_size() {
+        for _ in 0..=rows {
+            print!("~\r\n");
+        }
     }
 }
 
