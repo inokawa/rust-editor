@@ -35,11 +35,13 @@ impl StdinRaw {
         Ok(StdinRaw { fd, orig })
     }
 
-    pub fn dispose(self) {
-        tcsetattr(self.fd, TCSAFLUSH, &self.orig).unwrap();
-    }
-
     pub fn bytes(&self) -> Vec<Result<u8, std::io::Error>> {
         io::stdin().bytes().collect()
+    }
+}
+
+impl Drop for StdinRaw {
+    fn drop(&mut self) {
+        tcsetattr(self.fd, TCSAFLUSH, &self.orig).unwrap();
     }
 }

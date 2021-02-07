@@ -13,6 +13,5 @@ fn main() -> Result<(), Error> {
             }
         }
     }
-    input.dispose();
     Ok(())
 }
