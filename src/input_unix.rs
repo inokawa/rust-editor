@@ -35,8 +35,12 @@ impl StdinRaw {
         Ok(StdinRaw { fd, orig })
     }
 
-    pub fn bytes(&self) -> Vec<Result<u8, std::io::Error>> {
-        io::stdin().bytes().collect()
+    pub fn read(&self) -> Result<u8, std::io::Error> {
+        loop {
+            if let Some(b) = io::stdin().bytes().next() {
+                return b;
+            }
+        }
     }
 }
 

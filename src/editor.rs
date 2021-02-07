@@ -42,14 +42,12 @@ impl Editor {
     }
 
     fn process_key_press(&self) -> Result<bool, Error> {
-        for b in self.input.bytes() {
-            let b = b?;
-            let c = b as char;
-            print!("{} ({:?})\r\n", c, b);
-            match b {
-                EXIT => return Ok(true),
-                _ => {}
-            }
+        let b = self.input.read()?;
+        let c = b as char;
+        print!("{} ({:?})\r\n", c, b);
+        match b {
+            EXIT => return Ok(true),
+            _ => {}
         }
         Ok(false)
     }
