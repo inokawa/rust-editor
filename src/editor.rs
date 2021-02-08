@@ -83,10 +83,10 @@ impl Editor {
         let b = self.input.read()?;
         let c = b as char;
         match b {
-            UP => self.cursor.y -= 1,
-            DOWN => self.cursor.y += 1,
-            LEFT => self.cursor.x -= 1,
-            RIGHT => self.cursor.x += 1,
+            UP if self.cursor.y > 0 => self.cursor.y -= 1,
+            DOWN if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
+            LEFT if self.cursor.x > 0 => self.cursor.x -= 1,
+            RIGHT if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
             EXIT => return Ok(true),
             _ => {}
         }
