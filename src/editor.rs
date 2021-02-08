@@ -75,13 +75,13 @@ impl Editor {
         buf.push_str(SHOW_CURSOR);
 
         print!("{}", buf);
+        io::stdout().flush()?;
         Ok(())
     }
 
     fn process_key_press(&mut self) -> Result<bool, Error> {
         let b = self.input.read()?;
         let c = b as char;
-        print!("{} ({:?})\r\n", c, b);
         match b {
             UP => self.cursor.y -= 1,
             DOWN => self.cursor.y += 1,
