@@ -13,11 +13,21 @@ const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
 const EXIT: u8 = ctrl('q');
+const UP: u8 = b'w';
+const DOWN: u8 = b's';
+const LEFT: u8 = b'a';
+const RIGHT: u8 = b'd';
+
+struct Position {
+    x: usize,
+    y: usize,
+}
 
 pub struct Editor {
     input: StdinRaw,
     screen_rows: usize,
     screen_cols: usize,
+    cursor: Position,
 }
 
 impl Editor {
@@ -27,13 +37,14 @@ impl Editor {
                 input: stdin,
                 screen_rows,
                 screen_cols,
+                cursor: Position { x: 0, y: 0 },
             })
         } else {
             Err(Error::Init)
         }
     }
 
-    pub fn run(&self) -> Result<(), Error> {
+    pub fn run(&mut self) -> Result<(), Error> {
         loop {
             self.refresh_screen()?;
             let quit = self.process_key_press()?;
@@ -56,17 +67,26 @@ impl Editor {
         self.draw_rows(&mut buf);
 
         buf.push_str(MOVE_CURSOR_TO_START);
+        buf.push_str(&format!(
+            "\x1b[{};{}H",
+            self.cursor.y + 1,
+            self.cursor.x + 1
+        ));
         buf.push_str(SHOW_CURSOR);
 
         print!("{}", buf);
         Ok(())
     }
 
-    fn process_key_press(&self) -> Result<bool, Error> {
+    fn process_key_press(&mut self) -> Result<bool, Error> {
         let b = self.input.read()?;
         let c = b as char;
         print!("{} ({:?})\r\n", c, b);
         match b {
+            UP => self.cursor.y -= 1,
+            DOWN => self.cursor.y += 1,
+            LEFT => self.cursor.x -= 1,
+            RIGHT => self.cursor.x += 1,
             EXIT => return Ok(true),
             _ => {}
         }
