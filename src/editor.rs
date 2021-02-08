@@ -3,6 +3,12 @@ use std::io::{self, Write};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+const CLEAR_SCREEN: &str = "\x1b[2J";
+const CLEAR_LINE_RIGHT_OF_CURSOR: &str = "\x1b[K";
+const MOVE_CURSOR_TO_START: &str = "\x1b[H";
+const HIDE_CURSOR: &str = "\x1b[?25l";
+const SHOW_CURSOR: &str = "\x1b[?25h";
+
 const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
@@ -33,8 +39,8 @@ impl Editor {
             let quit = self.process_key_press()?;
             if quit == true {
                 let mut buf = String::new();
-                buf.push_str("\x1b[2J");
-                buf.push_str("\x1b[H");
+                buf.push_str(CLEAR_SCREEN);
+                buf.push_str(MOVE_CURSOR_TO_START);
                 print!("{}", buf);
                 break;
             }
@@ -44,13 +50,13 @@ impl Editor {
 
     fn refresh_screen(&self) -> Result<(), Error> {
         let mut buf = String::new();
-        buf.push_str("\x1b[?25l");
-        buf.push_str("\x1b[H");
+        buf.push_str(HIDE_CURSOR);
+        buf.push_str(MOVE_CURSOR_TO_START);
 
         self.draw_rows(&mut buf);
 
-        buf.push_str("\x1b[H");
-        buf.push_str("\x1b[?25h");
+        buf.push_str(MOVE_CURSOR_TO_START);
+        buf.push_str(SHOW_CURSOR);
 
         print!("{}", buf);
         Ok(())
@@ -81,7 +87,7 @@ impl Editor {
             } else {
                 buf.push_str("~");
             }
-            buf.push_str("\x1b[K");
+            buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
             if y < height - 1 {
                 buf.push_str("\r\n");
             }
