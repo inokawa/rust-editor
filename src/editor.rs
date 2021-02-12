@@ -13,15 +13,16 @@ const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
 
-const ESCAPE: u8 = b'\x1b';
 const EXIT: u8 = ctrl('q');
 
 enum Key {
     Escape,
     Exit,
+    Home,
+    End,
     Page(Page),
     Arrow(Arrow),
-    Todo,
+    Char(u8),
 }
 
 enum Page {
@@ -100,6 +101,8 @@ impl Editor {
     fn process_key_press(&mut self) -> Result<bool, Error> {
         if let Ok(key) = self.decode_sequence() {
             match key {
+                Key::Home => self.cursor.x = 0,
+                Key::End => self.cursor.x = self.screen_cols - 1,
                 Key::Page(k) => {
                     let mut times = self.screen_rows;
                     while times > 0 {
@@ -131,36 +134,57 @@ impl Editor {
     }
 
     fn decode_sequence(&mut self) -> Result<Key, Error> {
-        let b = self.input.read()?;
-        if b == ESCAPE {
-            match self.input.read() {
-                Ok(b'[') => match self.input.read() {
-                    Ok(b'A') => return Ok(Key::Arrow(Arrow::Up)),
-                    Ok(b'B') => return Ok(Key::Arrow(Arrow::Down)),
-                    Ok(b'C') => return Ok(Key::Arrow(Arrow::Right)),
-                    Ok(b'D') => return Ok(Key::Arrow(Arrow::Left)),
-                    Ok(b'5') => match self.input.read() {
-                        Ok(b'~') => return Ok(Key::Page(Page::Up)),
+        let b: u8;
+        loop {
+            if let Some(res) = self.input.read() {
+                b = res;
+                break;
+            }
+        }
+        match b {
+            b'\x1b' => {
+                match self.input.read() {
+                    Some(b'[') => match self.input.read() {
+                        Some(b'A') => return Ok(Key::Arrow(Arrow::Up)),
+                        Some(b'B') => return Ok(Key::Arrow(Arrow::Down)),
+                        Some(b'C') => return Ok(Key::Arrow(Arrow::Right)),
+                        Some(b'D') => return Ok(Key::Arrow(Arrow::Left)),
+                        Some(b'H') => return Ok(Key::Home),
+                        Some(b'F') => return Ok(Key::End),
+                        Some(b'1') | Some(b'7') => match self.input.read() {
+                            Some(b'~') => return Ok(Key::Home),
+                            _ => {}
+                        },
+                        Some(b'4') | Some(b'8') => match self.input.read() {
+                            Some(b'~') => return Ok(Key::End),
+                            _ => {}
+                        },
+                        Some(b'5') => match self.input.read() {
+                            Some(b'~') => return Ok(Key::Page(Page::Up)),
+                            _ => {}
+                        },
+                        Some(b'6') => match self.input.read() {
+                            Some(b'~') => return Ok(Key::Page(Page::Down)),
+                            _ => {}
+                        },
                         _ => {}
                     },
-                    Ok(b'6') => match self.input.read() {
-                        Ok(b'~') => return Ok(Key::Page(Page::Down)),
+                    Some(b'O') => match self.input.read() {
+                        Some(b'H') => return Ok(Key::Home),
+                        Some(b'F') => return Ok(Key::End),
                         _ => {}
                     },
                     _ => {}
-                },
-                _ => {}
+                }
+                Ok(Key::Escape)
             }
-            return Ok(Key::Escape);
+            b'w' => Ok(Key::Arrow(Arrow::Up)),
+            b's' => Ok(Key::Arrow(Arrow::Down)),
+            b'a' => Ok(Key::Arrow(Arrow::Left)),
+            b'd' => Ok(Key::Arrow(Arrow::Right)),
+            EXIT => Ok(Key::Exit),
+            _ => Ok(Key::Char(b)),
         }
-        Ok(match b {
-            b'w' => Key::Arrow(Arrow::Up),
-            b's' => Key::Arrow(Arrow::Down),
-            b'a' => Key::Arrow(Arrow::Left),
-            b'd' => Key::Arrow(Arrow::Right),
-            EXIT => Key::Exit,
-            _ => Key::Todo,
-        })
     }
 
     fn draw_rows(&self, buf: &mut String) {

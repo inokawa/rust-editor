@@ -35,11 +35,11 @@ impl StdinRaw {
         Ok(StdinRaw { fd, orig })
     }
 
-    pub fn read(&self) -> Result<u8, std::io::Error> {
-        loop {
-            if let Some(b) = io::stdin().bytes().next() {
-                return b;
-            }
+    pub fn read(&self) -> Option<u8> {
+        if let Some(b) = io::stdin().bytes().next() {
+            b.map(|b| Some(b)).unwrap_or(None)
+        } else {
+            None
         }
     }
 }
