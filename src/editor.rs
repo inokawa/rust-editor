@@ -18,6 +18,15 @@ const DOWN: u8 = b's';
 const LEFT: u8 = b'a';
 const RIGHT: u8 = b'd';
 
+enum Key {
+    Exit,
+    ArrowUp,
+    ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+    Todo,
+}
+
 struct Position {
     x: usize,
     y: usize,
@@ -81,16 +90,26 @@ impl Editor {
 
     fn process_key_press(&mut self) -> Result<bool, Error> {
         let b = self.input.read()?;
-        let c = b as char;
-        match b {
-            UP if self.cursor.y > 0 => self.cursor.y -= 1,
-            DOWN if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
-            LEFT if self.cursor.x > 0 => self.cursor.x -= 1,
-            RIGHT if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
-            EXIT => return Ok(true),
+        match self.decode_sequence(b) {
+            Key::ArrowUp if self.cursor.y > 0 => self.cursor.y -= 1,
+            Key::ArrowDown if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
+            Key::ArrowLeft if self.cursor.x > 0 => self.cursor.x -= 1,
+            Key::ArrowRight if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
+            Key::Exit => return Ok(true),
             _ => {}
         }
         Ok(false)
+    }
+
+    fn decode_sequence(&self, b: u8) -> Key {
+        match b {
+            UP => Key::ArrowUp,
+            DOWN => Key::ArrowDown,
+            LEFT => Key::ArrowLeft,
+            RIGHT => Key::ArrowRight,
+            EXIT => Key::Exit,
+            _ => Key::Todo,
+        }
     }
 
     fn draw_rows(&self, buf: &mut String) {
