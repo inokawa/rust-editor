@@ -18,6 +18,7 @@ const EXIT: u8 = ctrl('q');
 enum Key {
     Escape,
     Exit,
+    Del,
     Home,
     End,
     Page(Page),
@@ -101,6 +102,7 @@ impl Editor {
     fn process_key_press(&mut self) -> Result<bool, Error> {
         if let Ok(key) = self.decode_sequence() {
             match key {
+                Key::Del => {}
                 Key::Home => self.cursor.x = 0,
                 Key::End => self.cursor.x = self.screen_cols - 1,
                 Key::Page(k) => {
@@ -151,6 +153,10 @@ impl Editor {
                         Some(b'D') => return Ok(Key::Arrow(Arrow::Left)),
                         Some(b'H') => return Ok(Key::Home),
                         Some(b'F') => return Ok(Key::End),
+                        Some(b'3') => match self.input.read() {
+                            Some(b'~') => return Ok(Key::Del),
+                            _ => {}
+                        },
                         Some(b'1') | Some(b'7') => match self.input.read() {
                             Some(b'~') => return Ok(Key::Home),
                             _ => {}
