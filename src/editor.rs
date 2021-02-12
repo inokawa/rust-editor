@@ -19,11 +19,21 @@ const EXIT: u8 = ctrl('q');
 enum Key {
     Escape,
     Exit,
-    ArrowUp,
-    ArrowDown,
-    ArrowLeft,
-    ArrowRight,
+    Page(Page),
+    Arrow(Arrow),
     Todo,
+}
+
+enum Page {
+    Up,
+    Down,
+}
+
+enum Arrow {
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
 struct Position {
@@ -90,10 +100,19 @@ impl Editor {
     fn process_key_press(&mut self) -> Result<bool, Error> {
         if let Ok(key) = self.decode_sequence() {
             match key {
-                Key::ArrowUp if self.cursor.y > 0 => self.cursor.y -= 1,
-                Key::ArrowDown if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
-                Key::ArrowLeft if self.cursor.x > 0 => self.cursor.x -= 1,
-                Key::ArrowRight if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
+                Key::Page(k) => {
+                    let mut times = self.screen_rows;
+                    while times > 0 {
+                        self.move_cursor(match k {
+                            Page::Up => Arrow::Up,
+                            Page::Down => Arrow::Down,
+                        });
+                        times -= 1;
+                    }
+                }
+                Key::Arrow(k) => {
+                    self.move_cursor(k);
+                }
                 Key::Exit => return Ok(true),
                 _ => {}
             }
@@ -101,15 +120,33 @@ impl Editor {
         Ok(false)
     }
 
+    fn move_cursor(&mut self, key: Arrow) {
+        match key {
+            Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
+            Arrow::Down if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
+            Arrow::Left if self.cursor.x > 0 => self.cursor.x -= 1,
+            Arrow::Right if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
+            _ => {}
+        }
+    }
+
     fn decode_sequence(&mut self) -> Result<Key, Error> {
         let b = self.input.read()?;
         if b == ESCAPE {
             match self.input.read() {
-                Ok(b'[') => match self.input.read()? {
-                    b'A' => return Ok(Key::ArrowUp),
-                    b'B' => return Ok(Key::ArrowDown),
-                    b'C' => return Ok(Key::ArrowRight),
-                    b'D' => return Ok(Key::ArrowLeft),
+                Ok(b'[') => match self.input.read() {
+                    Ok(b'A') => return Ok(Key::Arrow(Arrow::Up)),
+                    Ok(b'B') => return Ok(Key::Arrow(Arrow::Down)),
+                    Ok(b'C') => return Ok(Key::Arrow(Arrow::Right)),
+                    Ok(b'D') => return Ok(Key::Arrow(Arrow::Left)),
+                    Ok(b'5') => match self.input.read() {
+                        Ok(b'~') => return Ok(Key::Page(Page::Up)),
+                        _ => {}
+                    },
+                    Ok(b'6') => match self.input.read() {
+                        Ok(b'~') => return Ok(Key::Page(Page::Down)),
+                        _ => {}
+                    },
                     _ => {}
                 },
                 _ => {}
@@ -117,10 +154,10 @@ impl Editor {
             return Ok(Key::Escape);
         }
         Ok(match b {
-            b'w' => Key::ArrowUp,
-            b's' => Key::ArrowDown,
-            b'a' => Key::ArrowLeft,
-            b'd' => Key::ArrowRight,
+            b'w' => Key::Arrow(Arrow::Up),
+            b's' => Key::Arrow(Arrow::Down),
+            b'a' => Key::Arrow(Arrow::Left),
+            b'd' => Key::Arrow(Arrow::Right),
             EXIT => Key::Exit,
             _ => Key::Todo,
         })
