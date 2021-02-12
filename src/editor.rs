@@ -12,13 +12,12 @@ const SHOW_CURSOR: &str = "\x1b[?25h";
 const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
+
+const ESCAPE: u8 = b'\x1b';
 const EXIT: u8 = ctrl('q');
-const UP: u8 = b'w';
-const DOWN: u8 = b's';
-const LEFT: u8 = b'a';
-const RIGHT: u8 = b'd';
 
 enum Key {
+    Escape,
     Exit,
     ArrowUp,
     ArrowDown,
@@ -89,27 +88,42 @@ impl Editor {
     }
 
     fn process_key_press(&mut self) -> Result<bool, Error> {
-        let b = self.input.read()?;
-        match self.decode_sequence(b) {
-            Key::ArrowUp if self.cursor.y > 0 => self.cursor.y -= 1,
-            Key::ArrowDown if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
-            Key::ArrowLeft if self.cursor.x > 0 => self.cursor.x -= 1,
-            Key::ArrowRight if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
-            Key::Exit => return Ok(true),
-            _ => {}
+        if let Ok(key) = self.decode_sequence() {
+            match key {
+                Key::ArrowUp if self.cursor.y > 0 => self.cursor.y -= 1,
+                Key::ArrowDown if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
+                Key::ArrowLeft if self.cursor.x > 0 => self.cursor.x -= 1,
+                Key::ArrowRight if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
+                Key::Exit => return Ok(true),
+                _ => {}
+            }
         }
         Ok(false)
     }
 
-    fn decode_sequence(&self, b: u8) -> Key {
-        match b {
-            UP => Key::ArrowUp,
-            DOWN => Key::ArrowDown,
-            LEFT => Key::ArrowLeft,
-            RIGHT => Key::ArrowRight,
+    fn decode_sequence(&mut self) -> Result<Key, Error> {
+        let b = self.input.read()?;
+        if b == ESCAPE {
+            match self.input.read() {
+                Ok(b'[') => match self.input.read()? {
+                    b'A' => return Ok(Key::ArrowUp),
+                    b'B' => return Ok(Key::ArrowDown),
+                    b'C' => return Ok(Key::ArrowRight),
+                    b'D' => return Ok(Key::ArrowLeft),
+                    _ => {}
+                },
+                _ => {}
+            }
+            return Ok(Key::Escape);
+        }
+        Ok(match b {
+            b'w' => Key::ArrowUp,
+            b's' => Key::ArrowDown,
+            b'a' => Key::ArrowLeft,
+            b'd' => Key::ArrowRight,
             EXIT => Key::Exit,
             _ => Key::Todo,
-        }
+        })
     }
 
     fn draw_rows(&self, buf: &mut String) {
