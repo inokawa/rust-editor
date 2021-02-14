@@ -1,4 +1,4 @@
-use super::{error::Error, input_unix::StdinRaw, output_unix::get_window_size};
+use super::{document::Document, error::Error, input_unix::StdinRaw, output_unix::get_window_size};
 use std::io::{self, Write};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -46,26 +46,6 @@ struct Screen {
 struct Position {
     x: usize,
     y: usize,
-}
-
-struct Document {
-    num_rows: usize,
-    row: Row,
-}
-
-impl Document {
-    pub fn new() -> Self {
-        Document {
-            num_rows: 0,
-            row: Row {
-                chars: String::from(""),
-            },
-        }
-    }
-}
-
-struct Row {
-    chars: String,
 }
 
 pub struct Editor {
