@@ -52,6 +52,7 @@ pub struct Editor {
     input: StdinRaw,
     screen: Screen,
     cursor: Position,
+    row_offset: usize,
     document: Document,
 }
 
@@ -65,6 +66,7 @@ impl Editor {
                     cols: screen_cols,
                 },
                 cursor: Position { x: 0, y: 0 },
+                row_offset: 0,
                 document,
             })
         } else {
@@ -87,7 +89,14 @@ impl Editor {
         Ok(())
     }
 
-    fn refresh_screen(&self) -> Result<(), Error> {
+    fn refresh_screen(&mut self) -> Result<(), Error> {
+        if self.cursor.y < self.row_offset {
+            self.row_offset = self.cursor.y;
+        }
+        if self.cursor.y >= self.row_offset + self.screen.rows {
+            self.row_offset = self.cursor.y - self.screen.rows + 1;
+        }
+
         let mut buf = String::new();
         buf.push_str(HIDE_CURSOR);
         buf.push_str(MOVE_CURSOR_TO_START);
@@ -97,7 +106,7 @@ impl Editor {
         buf.push_str(MOVE_CURSOR_TO_START);
         buf.push_str(&format!(
             "\x1b[{};{}H",
-            self.cursor.y + 1,
+            (self.cursor.y - self.row_offset) + 1,
             self.cursor.x + 1
         ));
         buf.push_str(SHOW_CURSOR);
@@ -136,7 +145,7 @@ impl Editor {
     fn move_cursor(&mut self, key: Arrow) {
         match key {
             Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
-            Arrow::Down if self.cursor.y < self.screen.rows - 1 => self.cursor.y += 1,
+            Arrow::Down if self.cursor.y < self.document.rows.len() => self.cursor.y += 1,
             Arrow::Left if self.cursor.x > 0 => self.cursor.x -= 1,
             Arrow::Right if self.cursor.x < self.screen.cols - 1 => self.cursor.x += 1,
             _ => {}
@@ -204,9 +213,11 @@ impl Editor {
     fn draw_rows(&self, buf: &mut String) {
         let width = self.screen.cols;
         let height = self.screen.rows;
+        let rows = self.document.rows.len();
         for y in 0..height {
-            if y >= self.document.rows.len() {
-                if self.document.rows.len() == 0 && y == height / 3 {
+            let file_row = y + self.row_offset;
+            if file_row >= rows {
+                if rows == 0 && y == height / 3 {
                     let message = format!("Kilo editor -- version {}", VERSION);
                     let padding = width.saturating_sub(message.len()) / 2;
                     let spaces = " ".repeat(padding.saturating_sub(1));
@@ -217,7 +228,7 @@ impl Editor {
                     buf.push_str("~");
                 }
             } else {
-                if let Some(row) = self.document.rows.get(y) {
+                if let Some(row) = self.document.rows.get(file_row) {
                     let mut chars = row.chars.clone();
                     chars.truncate(width);
                     buf.push_str(&chars);
