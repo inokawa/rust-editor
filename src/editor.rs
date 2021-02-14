@@ -60,7 +60,7 @@ impl Editor {
             Ok(Editor {
                 input: stdin,
                 screen: Screen {
-                    rows: screen_rows,
+                    rows: screen_rows - 1,
                     cols: screen_cols,
                 },
                 cursor: Position { x: 0, y: 0 },
@@ -96,6 +96,7 @@ impl Editor {
         buf.push_str(MOVE_CURSOR_TO_START);
 
         self.draw_rows(&mut buf);
+        self.draw_status_bar(&mut buf);
 
         buf.push_str(MOVE_CURSOR_TO_START);
         buf.push_str(&format!(
@@ -282,9 +283,17 @@ impl Editor {
             }
 
             buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
-            if y < height - 1 {
-                buf.push_str("\r\n");
-            }
+            buf.push_str("\r\n");
         }
+    }
+
+    fn draw_status_bar(&self, buf: &mut String) {
+        buf.push_str(REVERSE_VIDEO);
+        let mut len = 0;
+        while len < self.screen.cols {
+            buf.push_str(" ");
+            len += 1;
+        }
+        buf.push_str(RESET_FMT);
     }
 }
