@@ -3,15 +3,19 @@ use std::cmp;
 const TAB_STOP: usize = 4;
 
 pub struct Document {
+    pub filename: Option<String>,
     pub rows: Vec<Row>,
 }
 
 impl Document {
     pub fn new() -> Self {
-        Document { rows: vec![] }
+        Document {
+            filename: None,
+            rows: vec![],
+        }
     }
 
-    pub fn open(file: String) -> Self {
+    pub fn open(filename: String, file: String) -> Self {
         let rows: Vec<Row> = file
             .lines()
             .map(|l| Row {
@@ -19,7 +23,10 @@ impl Document {
             })
             .collect();
 
-        Document { rows }
+        Document {
+            filename: Some(filename),
+            rows,
+        }
     }
 }
 

@@ -2,7 +2,10 @@ use super::{
     ansi_escape::*, document::Document, error::Error, input_unix::StdinRaw,
     output_unix::get_window_size,
 };
-use std::io::{self, Write};
+use std::{
+    cmp,
+    io::{self, Write},
+};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -289,7 +292,14 @@ impl Editor {
 
     fn draw_status_bar(&self, buf: &mut String) {
         buf.push_str(REVERSE_VIDEO);
-        let mut len = 0;
+        let mut filename = match &self.document.filename {
+            Some(n) => n.clone(),
+            None => String::from("[No Name]"),
+        };
+        filename.truncate(20);
+        let bar = format!("{} - {} lines", filename, self.document.rows.len());
+        let mut len = cmp::min(bar.len(), self.screen.cols);
+        buf.push_str(&bar);
         while len < self.screen.cols {
             buf.push_str(" ");
             len += 1;
