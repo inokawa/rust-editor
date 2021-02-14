@@ -206,7 +206,7 @@ impl Editor {
         let height = self.screen.rows;
         for y in 0..height {
             if y >= self.document.num_rows {
-                if y == height / 3 {
+                if self.document.num_rows == 0 && y == height / 3 {
                     let message = format!("Kilo editor -- version {}", VERSION);
                     let padding = width.saturating_sub(message.len()) / 2;
                     let spaces = " ".repeat(padding.saturating_sub(1));
