@@ -297,12 +297,19 @@ impl Editor {
             None => String::from("[No Name]"),
         };
         filename.truncate(20);
-        let bar = format!("{} - {} lines", filename, self.document.rows.len());
-        let mut len = cmp::min(bar.len(), self.screen.cols);
-        buf.push_str(&bar);
+        let left = format!("{} - {} lines", filename, self.document.rows.len());
+        let right = format!("{}/{}", self.cursor.y, self.document.rows.len());
+        let rlen = right.len();
+        let mut len = cmp::min(left.len(), self.screen.cols);
+        buf.push_str(&left);
         while len < self.screen.cols {
-            buf.push_str(" ");
-            len += 1;
+            if self.screen.cols - len == rlen {
+                buf.push_str(&right);
+                break;
+            } else {
+                buf.push_str(" ");
+                len += 1;
+            }
         }
         buf.push_str(RESET_FMT);
     }
