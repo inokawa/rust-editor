@@ -33,21 +33,19 @@ impl Row {
         if start > end {
             return String::from("");
         }
-        match self
-            .chars
+        self.chars
             .get(cmp::max(0, start)..cmp::min(self.chars.len(), end))
-        {
-            Some(c) => c
-                .split("")
-                .map(|c| {
-                    if c == &'\t'.to_string() {
-                        " ".repeat(TAB_STOP)
-                    } else {
-                        c.to_string()
-                    }
-                })
-                .collect(),
-            None => String::from(""),
-        }
+            .map(|c| {
+                c.split("")
+                    .map(|c| {
+                        if c == &'\t'.to_string() {
+                            " ".repeat(TAB_STOP)
+                        } else {
+                            c.to_string()
+                        }
+                    })
+                    .collect()
+            })
+            .unwrap_or(String::from(""))
     }
 }
