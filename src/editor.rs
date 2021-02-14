@@ -134,9 +134,14 @@ impl Editor {
                 Key::Page(k) => {
                     let direction = match k {
                         Page::Up => {
+                            self.cursor.y = self.row_offset;
                             Arrow::Up
                         }
                         Page::Down => {
+                            self.cursor.y = self.row_offset + self.screen.rows - 1;
+                            if self.cursor.y > self.document.rows.len() {
+                                self.cursor.y = self.document.rows.len();
+                            }
                             Arrow::Down
                         }
                     };
