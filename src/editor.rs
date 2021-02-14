@@ -130,7 +130,11 @@ impl Editor {
             match key {
                 Key::Del => {}
                 Key::Home => self.cursor.x = 0,
-                Key::End => self.cursor.x = self.screen.cols - 1,
+                Key::End => {
+                    if let Some(row) = self.document.rows.get(self.cursor.y) {
+                        self.cursor.x = row.len();
+                    }
+                }
                 Key::Page(k) => {
                     let direction = match k {
                         Page::Up => {
