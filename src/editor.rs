@@ -154,12 +154,25 @@ impl Editor {
     }
 
     fn move_cursor(&mut self, key: Arrow) {
+        let row = self.document.rows.get(self.cursor.y);
         match key {
             Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
             Arrow::Down if self.cursor.y < self.document.rows.len() => self.cursor.y += 1,
             Arrow::Left if self.cursor.x > 0 => self.cursor.x -= 1,
-            Arrow::Right => self.cursor.x += 1,
+            Arrow::Right => {
+                if let Some(r) = row {
+                    if self.cursor.x < r.chars.len() {
+                        self.cursor.x += 1
+                    }
+                }
+            }
             _ => {}
+        }
+        let row = self.document.rows.get(self.cursor.y);
+        if let Some(r) = row {
+            if self.cursor.x > r.chars.len() {
+                self.cursor.x = r.chars.len();
+            }
         }
     }
 
