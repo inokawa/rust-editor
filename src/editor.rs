@@ -135,17 +135,22 @@ impl Editor {
                 Key::Home => self.cursor.x = 0,
                 Key::End => self.cursor.x = self.screen.cols - 1,
                 Key::Page(k) => {
+                    let direction = match k {
+                        Page::Up => {
+                            Arrow::Up
+                        }
+                        Page::Down => {
+                            Arrow::Down
+                        }
+                    };
                     let mut times = self.screen.rows;
                     while times > 0 {
-                        self.move_cursor(match k {
-                            Page::Up => Arrow::Up,
-                            Page::Down => Arrow::Down,
-                        });
+                        self.move_cursor(&direction);
                         times -= 1;
                     }
                 }
                 Key::Arrow(k) => {
-                    self.move_cursor(k);
+                    self.move_cursor(&k);
                 }
                 Key::Exit => return Ok(true),
                 _ => {}
@@ -154,7 +159,7 @@ impl Editor {
         Ok(false)
     }
 
-    fn move_cursor(&mut self, key: Arrow) {
+    fn move_cursor(&mut self, key: &Arrow) {
         match key {
             Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
             Arrow::Down if self.cursor.y < self.document.rows.len() => self.cursor.y += 1,
