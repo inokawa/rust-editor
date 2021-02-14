@@ -25,7 +25,7 @@ impl Document {
 }
 
 pub struct Row {
-    pub chars: String,
+    chars: String,
 }
 
 impl Row {
@@ -47,5 +47,9 @@ impl Row {
                     .collect()
             })
             .unwrap_or(String::from(""))
+    }
+
+    pub fn len(&self) -> usize {
+        self.chars.len()
     }
 }

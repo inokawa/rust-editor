@@ -160,13 +160,13 @@ impl Editor {
                 } else if self.cursor.y > 0 {
                     self.cursor.y -= 1;
                     if let Some(row) = self.document.rows.get(self.cursor.y) {
-                        self.cursor.x = row.chars.len();
+                        self.cursor.x = row.len();
                     }
                 }
             }
             Arrow::Right => {
                 if let Some(row) = self.document.rows.get(self.cursor.y) {
-                    let chars_len = row.chars.len();
+                    let chars_len = row.len();
                     if self.cursor.x < chars_len {
                         self.cursor.x += 1
                     } else if self.cursor.x == chars_len {
@@ -178,8 +178,8 @@ impl Editor {
             _ => {}
         }
         if let Some(r) = self.document.rows.get(self.cursor.y) {
-            if self.cursor.x > r.chars.len() {
-                self.cursor.x = r.chars.len();
+            if self.cursor.x > r.len() {
+                self.cursor.x = r.len();
             }
         }
     }
