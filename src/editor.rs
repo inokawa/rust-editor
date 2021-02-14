@@ -38,6 +38,11 @@ enum Arrow {
     Right,
 }
 
+struct Screen {
+    rows: usize,
+    cols: usize,
+}
+
 struct Position {
     x: usize,
     y: usize,
@@ -65,8 +70,7 @@ struct Row {
 
 pub struct Editor {
     input: StdinRaw,
-    screen_rows: usize,
-    screen_cols: usize,
+    screen: Screen,
     cursor: Position,
     document: Document,
 }
@@ -76,8 +80,10 @@ impl Editor {
         if let Some((screen_rows, screen_cols)) = get_window_size() {
             Ok(Editor {
                 input: stdin,
-                screen_rows,
-                screen_cols,
+                screen: Screen {
+                    rows: screen_rows,
+                    cols: screen_cols,
+                },
                 cursor: Position { x: 0, y: 0 },
                 document: Document::new(),
             })
@@ -127,9 +133,9 @@ impl Editor {
             match key {
                 Key::Del => {}
                 Key::Home => self.cursor.x = 0,
-                Key::End => self.cursor.x = self.screen_cols - 1,
+                Key::End => self.cursor.x = self.screen.cols - 1,
                 Key::Page(k) => {
-                    let mut times = self.screen_rows;
+                    let mut times = self.screen.rows;
                     while times > 0 {
                         self.move_cursor(match k {
                             Page::Up => Arrow::Up,
@@ -151,9 +157,9 @@ impl Editor {
     fn move_cursor(&mut self, key: Arrow) {
         match key {
             Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
-            Arrow::Down if self.cursor.y < self.screen_rows - 1 => self.cursor.y += 1,
+            Arrow::Down if self.cursor.y < self.screen.rows - 1 => self.cursor.y += 1,
             Arrow::Left if self.cursor.x > 0 => self.cursor.x -= 1,
-            Arrow::Right if self.cursor.x < self.screen_cols - 1 => self.cursor.x += 1,
+            Arrow::Right if self.cursor.x < self.screen.cols - 1 => self.cursor.x += 1,
             _ => {}
         }
     }
@@ -217,8 +223,8 @@ impl Editor {
     }
 
     fn draw_rows(&self, buf: &mut String) {
-        let width = self.screen_cols;
-        let height = self.screen_rows;
+        let width = self.screen.cols;
+        let height = self.screen.rows;
         for y in 0..height {
             if y >= self.document.num_rows {
                 if y == height / 3 {
