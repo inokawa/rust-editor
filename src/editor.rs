@@ -56,7 +56,7 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(stdin: StdinRaw) -> Result<Self, Error> {
+    pub fn new(stdin: StdinRaw, document: Document) -> Result<Self, Error> {
         if let Some((screen_rows, screen_cols)) = get_window_size() {
             Ok(Editor {
                 input: stdin,
@@ -65,7 +65,7 @@ impl Editor {
                     cols: screen_cols,
                 },
                 cursor: Position { x: 0, y: 0 },
-                document: Document::new(),
+                document,
             })
         } else {
             Err(Error::Init)
@@ -73,7 +73,6 @@ impl Editor {
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
-        self.draw_init();
         loop {
             self.refresh_screen()?;
             let quit = self.process_key_press()?;
@@ -228,10 +227,5 @@ impl Editor {
                 buf.push_str("\r\n");
             }
         }
-    }
-
-    fn draw_init(&mut self) {
-        self.document.row.chars = "Hello, world!\0".to_string();
-        self.document.num_rows = 1;
     }
 }

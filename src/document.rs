@@ -12,6 +12,17 @@ impl Document {
             },
         }
     }
+
+    pub fn open(file: String) -> Self {
+        let mut rows = String::from("");
+        for value in file.lines() {
+            rows.push_str(value);
+        }
+        Document {
+            num_rows: 1,
+            row: Row { chars: rows },
+        }
+    }
 }
 
 pub struct Row {
