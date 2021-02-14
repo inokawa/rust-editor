@@ -92,18 +92,7 @@ impl Editor {
     }
 
     fn refresh_screen(&mut self) -> Result<(), Error> {
-        if self.cursor.y < self.row_offset {
-            self.row_offset = self.cursor.y;
-        }
-        if self.cursor.y >= self.row_offset + self.screen.rows {
-            self.row_offset = self.cursor.y - self.screen.rows + 1;
-        }
-        if self.cursor.x < self.col_offset {
-            self.col_offset = self.cursor.x;
-        }
-        if self.cursor.x >= self.col_offset + self.screen.cols {
-            self.col_offset = self.cursor.x - self.screen.cols + 1;
-        }
+        self.scroll();
 
         let mut buf = String::new();
         buf.push_str(HIDE_CURSOR);
@@ -122,6 +111,21 @@ impl Editor {
         print!("{}", buf);
         io::stdout().flush()?;
         Ok(())
+    }
+
+    fn scroll(&mut self) {
+        if self.cursor.y < self.row_offset {
+            self.row_offset = self.cursor.y;
+        }
+        if self.cursor.y >= self.row_offset + self.screen.rows {
+            self.row_offset = self.cursor.y - self.screen.rows + 1;
+        }
+        if self.cursor.x < self.col_offset {
+            self.col_offset = self.cursor.x;
+        }
+        if self.cursor.x >= self.col_offset + self.screen.cols {
+            self.col_offset = self.cursor.x - self.screen.cols + 1;
+        }
     }
 
     fn process_key_press(&mut self) -> Result<bool, Error> {
