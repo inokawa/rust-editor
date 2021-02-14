@@ -1,5 +1,8 @@
 use super::{document::Document, error::Error, input_unix::StdinRaw, output_unix::get_window_size};
-use std::io::{self, Write};
+use std::{
+    cmp,
+    io::{self, Write},
+};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -53,6 +56,7 @@ pub struct Editor {
     screen: Screen,
     cursor: Position,
     row_offset: usize,
+    col_offset: usize,
     document: Document,
 }
 
@@ -67,6 +71,7 @@ impl Editor {
                 },
                 cursor: Position { x: 0, y: 0 },
                 row_offset: 0,
+                col_offset: 0,
                 document,
             })
         } else {
@@ -96,6 +101,12 @@ impl Editor {
         if self.cursor.y >= self.row_offset + self.screen.rows {
             self.row_offset = self.cursor.y - self.screen.rows + 1;
         }
+        if self.cursor.x < self.col_offset {
+            self.col_offset = self.cursor.x;
+        }
+        if self.cursor.x >= self.col_offset + self.screen.cols {
+            self.col_offset = self.cursor.x - self.screen.cols + 1;
+        }
 
         let mut buf = String::new();
         buf.push_str(HIDE_CURSOR);
@@ -107,7 +118,7 @@ impl Editor {
         buf.push_str(&format!(
             "\x1b[{};{}H",
             (self.cursor.y - self.row_offset) + 1,
-            self.cursor.x + 1
+            (self.cursor.x - self.col_offset) + 1
         ));
         buf.push_str(SHOW_CURSOR);
 
@@ -147,7 +158,7 @@ impl Editor {
             Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
             Arrow::Down if self.cursor.y < self.document.rows.len() => self.cursor.y += 1,
             Arrow::Left if self.cursor.x > 0 => self.cursor.x -= 1,
-            Arrow::Right if self.cursor.x < self.screen.cols - 1 => self.cursor.x += 1,
+            Arrow::Right => self.cursor.x += 1,
             _ => {}
         }
     }
@@ -229,9 +240,10 @@ impl Editor {
                 }
             } else {
                 if let Some(row) = self.document.rows.get(file_row) {
-                    let mut chars = row.chars.clone();
-                    chars.truncate(width);
-                    buf.push_str(&chars);
+                    let char_len = row.chars.len();
+                    let chars = &row.chars[cmp::max(0, cmp::min(self.col_offset, char_len))
+                        ..cmp::min(self.col_offset + width, char_len)];
+                    buf.push_str(chars);
                 }
             }
 
