@@ -264,9 +264,9 @@ impl Editor {
                 }
             } else {
                 if let Some(row) = self.document.rows.get(file_row) {
-                    let char_len = row.chars.len();
-                    let chars = &row.chars[cmp::max(0, cmp::min(self.col_offset, char_len))
-                        ..cmp::min(self.col_offset + width, char_len)];
+                    let len = row.render.len();
+                    let chars = &row.render[cmp::max(0, cmp::min(self.col_offset, len))
+                        ..cmp::min(self.col_offset + width, len)];
                     buf.push_str(chars);
                 }
             }
