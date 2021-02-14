@@ -14,9 +14,8 @@ impl Document {
     pub fn open(file: String) -> Self {
         let rows: Vec<Row> = file
             .lines()
-            .map(|l| {
-                let chars = l.to_string();
-                Row { chars }
+            .map(|l| Row {
+                string: l.to_string(),
             })
             .collect();
 
@@ -25,7 +24,7 @@ impl Document {
 }
 
 pub struct Row {
-    chars: String,
+    string: String,
 }
 
 impl Row {
@@ -33,12 +32,12 @@ impl Row {
         if start > end {
             return String::from("");
         }
-        self.chars
-            .get(cmp::max(0, start)..cmp::min(self.chars.len(), end))
+        self.string
+            .get(cmp::max(0, start)..cmp::min(self.string.len(), end))
             .map(|c| {
-                c.split("")
+                c.chars()
                     .map(|c| {
-                        if c == &'\t'.to_string() {
+                        if c == '\t' {
                             " ".repeat(TAB_STOP)
                         } else {
                             c.to_string()
@@ -50,6 +49,12 @@ impl Row {
     }
 
     pub fn len(&self) -> usize {
-        self.chars.len()
+        self.string.chars().fold(0, |acc, c| {
+            if c == '\t' {
+                acc + 1 * TAB_STOP
+            } else {
+                acc + 1
+            }
+        })
     }
 }
