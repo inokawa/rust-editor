@@ -205,8 +205,8 @@ impl Editor {
         let width = self.screen.cols;
         let height = self.screen.rows;
         for y in 0..height {
-            if y >= self.document.num_rows {
-                if self.document.num_rows == 0 && y == height / 3 {
+            if y >= self.document.rows.len() {
+                if self.document.rows.len() == 0 && y == height / 3 {
                     let message = format!("Kilo editor -- version {}", VERSION);
                     let padding = width.saturating_sub(message.len()) / 2;
                     let spaces = " ".repeat(padding.saturating_sub(1));
@@ -217,9 +217,11 @@ impl Editor {
                     buf.push_str("~");
                 }
             } else {
-                let mut chars = self.document.row.chars.clone();
-                chars.truncate(width);
-                buf.push_str(&chars);
+                if let Some(row) = self.document.rows.get(y) {
+                    let mut chars = row.chars.clone();
+                    chars.truncate(width);
+                    buf.push_str(&chars);
+                }
             }
 
             buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);

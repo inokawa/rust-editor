@@ -1,27 +1,20 @@
 pub struct Document {
-    pub num_rows: usize,
-    pub row: Row,
+    pub rows: Vec<Row>,
 }
 
 impl Document {
     pub fn new() -> Self {
-        Document {
-            num_rows: 0,
-            row: Row {
-                chars: String::from(""),
-            },
-        }
+        Document { rows: vec![] }
     }
 
     pub fn open(file: String) -> Self {
-        let mut rows = String::from("");
+        let mut rows: Vec<Row> = vec![];
         for value in file.lines() {
-            rows.push_str(value);
+            rows.push(Row {
+                chars: value.to_string(),
+            });
         }
-        Document {
-            num_rows: 1,
-            row: Row { chars: rows },
-        }
+        Document { rows }
     }
 }
 
