@@ -1,8 +1,5 @@
 use super::{document::Document, error::Error, input_unix::StdinRaw, output_unix::get_window_size};
-use std::{
-    cmp,
-    io::{self, Write},
-};
+use std::io::{self, Write};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -264,9 +261,7 @@ impl Editor {
                 }
             } else {
                 if let Some(row) = self.document.rows.get(file_row) {
-                    let len = row.render.len();
-                    let chars = &row.render[cmp::max(0, cmp::min(self.col_offset, len))
-                        ..cmp::min(self.col_offset + width, len)];
+                    let chars = &row.render(self.col_offset, self.col_offset + width);
                     buf.push_str(chars);
                 }
             }

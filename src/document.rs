@@ -1,3 +1,5 @@
+use std::cmp;
+
 const TAB_STOP: usize = 4;
 
 pub struct Document {
@@ -14,17 +16,7 @@ impl Document {
             .lines()
             .map(|l| {
                 let chars = l.to_string();
-                let render: String = chars
-                    .split("")
-                    .map(|c| {
-                        if c == &'\t'.to_string() {
-                            " ".repeat(TAB_STOP)
-                        } else {
-                            c.to_string()
-                        }
-                    })
-                    .collect();
-                Row { chars, render }
+                Row { chars }
             })
             .collect();
 
@@ -34,5 +26,28 @@ impl Document {
 
 pub struct Row {
     pub chars: String,
-    pub render: String,
+}
+
+impl Row {
+    pub fn render(&self, start: usize, end: usize) -> String {
+        if start > end {
+            return String::from("");
+        }
+        match self
+            .chars
+            .get(cmp::max(0, start)..cmp::min(self.chars.len(), end))
+        {
+            Some(c) => c
+                .split("")
+                .map(|c| {
+                    if c == &'\t'.to_string() {
+                        " ".repeat(TAB_STOP)
+                    } else {
+                        c.to_string()
+                    }
+                })
+                .collect(),
+            None => String::from(""),
+        }
+    }
 }
