@@ -8,12 +8,13 @@ impl Document {
     }
 
     pub fn open(file: String) -> Self {
-        let mut rows: Vec<Row> = vec![];
-        for value in file.lines() {
-            rows.push(Row {
-                chars: value.to_string(),
-            });
-        }
+        let rows: Vec<Row> = file
+            .lines()
+            .map(|l| Row {
+                chars: l.to_string(),
+            })
+            .collect();
+
         Document { rows }
     }
 }
