@@ -43,11 +43,17 @@ struct Position {
     y: usize,
 }
 
+struct Row {
+    chars: String,
+}
+
 pub struct Editor {
     input: StdinRaw,
     screen_rows: usize,
     screen_cols: usize,
     cursor: Position,
+    num_rows: usize,
+    row: Row,
 }
 
 impl Editor {
@@ -58,6 +64,10 @@ impl Editor {
                 screen_rows,
                 screen_cols,
                 cursor: Position { x: 0, y: 0 },
+                num_rows: 0,
+                row: Row {
+                    chars: String::from(""),
+                },
             })
         } else {
             Err(Error::Init)
@@ -65,6 +75,7 @@ impl Editor {
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
+        self.draw_init();
         loop {
             self.refresh_screen()?;
             let quit = self.process_key_press()?;
@@ -197,20 +208,32 @@ impl Editor {
         let width = self.screen_cols;
         let height = self.screen_rows;
         for y in 0..height {
-            if y == height / 3 {
-                let message = format!("Kilo editor -- version {}", VERSION);
-                let padding = width.saturating_sub(message.len()) / 2;
-                let spaces = " ".repeat(padding.saturating_sub(1));
-                let mut message = format!("~{}{}", spaces, message);
-                message.truncate(width);
-                buf.push_str(&message);
+            if y >= self.num_rows {
+                if y == height / 3 {
+                    let message = format!("Kilo editor -- version {}", VERSION);
+                    let padding = width.saturating_sub(message.len()) / 2;
+                    let spaces = " ".repeat(padding.saturating_sub(1));
+                    let mut message = format!("~{}{}", spaces, message);
+                    message.truncate(width);
+                    buf.push_str(&message);
+                } else {
+                    buf.push_str("~");
+                }
             } else {
-                buf.push_str("~");
+                let mut chars = self.row.chars.clone();
+                chars.truncate(width);
+                buf.push_str(&chars);
             }
+
             buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
             if y < height - 1 {
                 buf.push_str("\r\n");
             }
         }
+    }
+
+    fn draw_init(&mut self) {
+        self.row.chars = "Hello, world!\0".to_string();
+        self.num_rows = 1;
     }
 }
