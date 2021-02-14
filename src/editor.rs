@@ -43,6 +43,22 @@ struct Position {
     y: usize,
 }
 
+struct Document {
+    num_rows: usize,
+    row: Row,
+}
+
+impl Document {
+    pub fn new() -> Self {
+        Document {
+            num_rows: 0,
+            row: Row {
+                chars: String::from(""),
+            },
+        }
+    }
+}
+
 struct Row {
     chars: String,
 }
@@ -52,8 +68,7 @@ pub struct Editor {
     screen_rows: usize,
     screen_cols: usize,
     cursor: Position,
-    num_rows: usize,
-    row: Row,
+    document: Document,
 }
 
 impl Editor {
@@ -64,10 +79,7 @@ impl Editor {
                 screen_rows,
                 screen_cols,
                 cursor: Position { x: 0, y: 0 },
-                num_rows: 0,
-                row: Row {
-                    chars: String::from(""),
-                },
+                document: Document::new(),
             })
         } else {
             Err(Error::Init)
@@ -208,7 +220,7 @@ impl Editor {
         let width = self.screen_cols;
         let height = self.screen_rows;
         for y in 0..height {
-            if y >= self.num_rows {
+            if y >= self.document.num_rows {
                 if y == height / 3 {
                     let message = format!("Kilo editor -- version {}", VERSION);
                     let padding = width.saturating_sub(message.len()) / 2;
@@ -220,7 +232,7 @@ impl Editor {
                     buf.push_str("~");
                 }
             } else {
-                let mut chars = self.row.chars.clone();
+                let mut chars = self.document.row.chars.clone();
                 chars.truncate(width);
                 buf.push_str(&chars);
             }
@@ -233,7 +245,7 @@ impl Editor {
     }
 
     fn draw_init(&mut self) {
-        self.row.chars = "Hello, world!\0".to_string();
-        self.num_rows = 1;
+        self.document.row.chars = "Hello, world!\0".to_string();
+        self.document.num_rows = 1;
     }
 }
