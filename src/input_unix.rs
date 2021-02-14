@@ -1,38 +1,46 @@
 use super::error::Error;
-use std::{
-    io::{self, Read},
-    os::unix::io::AsRawFd,
+use libc::{
+    tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
+    IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,
 };
-use termios::*;
+use std::io::{self, Read};
 
 #[cfg(unix)]
 pub struct StdinRaw {
-    fd: i32,
-    orig: Termios,
+    orig: termios,
 }
 
 impl StdinRaw {
     pub fn new() -> Result<Self, Error> {
-        let fd = io::stdin().as_raw_fd();
-        let mut termios = Termios::from_fd(fd)?;
-        let orig = termios;
+        let mut term = termios {
+            c_iflag: 0,
+            c_oflag: 0,
+            c_cflag: 0,
+            c_lflag: 0,
+            c_cc: [0u8; 20],
+            c_ispeed: 0,
+            c_ospeed: 0,
+        };
+        unsafe { tcgetattr(STDIN_FILENO, &mut term) };
+
+        let orig = term;
 
         // Set terminal raw mode. Disable echo back, canonical mode, signals (SIGINT, SIGTSTP) and Ctrl+V.
-        termios.c_lflag &= !(ECHO | ICANON | ISIG | IEXTEN);
+        term.c_lflag &= !(ECHO | ICANON | ISIG | IEXTEN);
         // Disable control flow mode (Ctrl+Q/Ctrl+S) and CR-to-NL translation
-        termios.c_iflag &= !(IXON | ICRNL | BRKINT | INPCK | ISTRIP);
+        term.c_iflag &= !(IXON | ICRNL | BRKINT | INPCK | ISTRIP);
         // Disable output processing such as \n to \r\n translation
-        termios.c_oflag &= !OPOST;
+        term.c_oflag &= !OPOST;
         // Ensure character size is 8bits
-        termios.c_cflag |= CS8;
+        term.c_cflag |= CS8;
         // Do not wait for next byte with blocking since reading 0 byte is permitted
-        termios.c_cc[VMIN] = 0;
+        term.c_cc[VMIN] = 0;
         // Set read timeout to 1/10 second it enables 100ms timeout on read()
-        termios.c_cc[VTIME] = 1;
+        term.c_cc[VTIME] = 1;
         // Apply terminal configurations
-        tcsetattr(fd, TCSAFLUSH, &termios)?;
+        unsafe { tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) };
 
-        Ok(StdinRaw { fd, orig })
+        Ok(StdinRaw { orig })
     }
 
     pub fn read(&self) -> Option<u8> {
@@ -46,6 +54,6 @@ impl StdinRaw {
 
 impl Drop for StdinRaw {
     fn drop(&mut self) {
-        tcsetattr(self.fd, TCSAFLUSH, &self.orig).unwrap();
+        unsafe { tcsetattr(STDIN_FILENO, TCSAFLUSH, &self.orig) };
     }
 }
