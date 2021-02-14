@@ -1,4 +1,4 @@
-use super::error::Error;
+use super::{ansi_escape::*, error::Error};
 use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,
@@ -40,6 +40,8 @@ impl StdinRaw {
         // Apply terminal configurations
         unsafe { tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) };
 
+        print!("{}", SMCUP);
+
         Ok(StdinRaw { orig })
     }
 
@@ -54,6 +56,8 @@ impl StdinRaw {
 
 impl Drop for StdinRaw {
     fn drop(&mut self) {
+        print!("{}", RMCUP);
+
         unsafe { tcsetattr(STDIN_FILENO, TCSAFLUSH, &self.orig) };
     }
 }

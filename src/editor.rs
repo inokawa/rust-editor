@@ -1,13 +1,10 @@
-use super::{document::Document, error::Error, input_unix::StdinRaw, output_unix::get_window_size};
+use super::{
+    ansi_escape::*, document::Document, error::Error, input_unix::StdinRaw,
+    output_unix::get_window_size,
+};
 use std::io::{self, Write};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const CLEAR_SCREEN: &str = "\x1b[2J";
-const CLEAR_LINE_RIGHT_OF_CURSOR: &str = "\x1b[K";
-const MOVE_CURSOR_TO_START: &str = "\x1b[H";
-const HIDE_CURSOR: &str = "\x1b[?25l";
-const SHOW_CURSOR: &str = "\x1b[?25h";
 
 const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
