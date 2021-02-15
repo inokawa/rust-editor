@@ -1,3 +1,4 @@
+use super::editor::Position;
 use std::cmp;
 
 const TAB_STOP: usize = 4;
@@ -36,6 +37,18 @@ impl Document {
     pub fn len(&self) -> usize {
         self.rows.len()
     }
+
+    pub fn insert(&mut self, c: char, at: &Position) {
+        if at.y == self.len() {
+            let mut row = Row::new();
+            row.insert(c, 0);
+            self.rows.push(row);
+        } else if at.y < self.len() {
+            if let Some(row) = self.rows.get_mut(at.y) {
+                row.insert(c, at.x);
+            }
+        }
+    }
 }
 
 pub struct Row {
@@ -43,6 +56,12 @@ pub struct Row {
 }
 
 impl Row {
+    pub fn new() -> Self {
+        Row {
+            string: String::from(""),
+        }
+    }
+
     pub fn render(&self, start: usize, end: usize) -> String {
         if start > end {
             return String::from("");
@@ -71,5 +90,18 @@ impl Row {
                 acc + 1
             }
         })
+    }
+
+    pub fn insert(&mut self, c: char, at: usize) {
+        if at >= self.len() {
+            self.string.push(c);
+        } else {
+            self.string = self
+                .string
+                .chars()
+                .enumerate()
+                .map(|(i, ch)| if i == at { c } else { ch })
+                .collect();
+        }
     }
 }

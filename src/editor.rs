@@ -44,9 +44,9 @@ struct Screen {
     cols: usize,
 }
 
-struct Position {
-    x: usize,
-    y: usize,
+pub struct Position {
+    pub x: usize,
+    pub y: usize,
 }
 
 struct Message {
@@ -181,6 +181,7 @@ impl Editor {
                     self.move_cursor(&k);
                 }
                 Key::Exit => return Ok(true),
+                Key::Char(c) => self.document.insert(c as char, &self.cursor),
                 _ => {}
             }
         }
