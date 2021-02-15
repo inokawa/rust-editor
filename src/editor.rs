@@ -32,8 +32,7 @@ enum Key {
     End,
     Page(Page),
     Arrow(Arrow),
-    Char(u8),
-    None,
+    Char(char),
 }
 
 enum Page {
@@ -194,7 +193,7 @@ impl Editor {
                 }
                 Key::Save => {}
                 Key::Exit => return Ok(true),
-                Key::Char(c) => self.document.insert(c as char, &self.cursor),
+                Key::Char(c) => self.document.insert(c, &self.cursor),
                 _ => {}
             }
         }
@@ -294,7 +293,7 @@ impl Editor {
             REFRESH_SCREEN => Ok(Key::Escape),
             SAVE => Ok(Key::Save),
             EXIT => Ok(Key::Exit),
-            _ => Ok(Key::Char(b)),
+            _ => Ok(Key::Char(b as char)),
         }
     }
 
