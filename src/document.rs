@@ -4,7 +4,7 @@ const TAB_STOP: usize = 4;
 
 pub struct Document {
     pub filename: Option<String>,
-    pub rows: Vec<Row>,
+    rows: Vec<Row>,
 }
 
 impl Document {
@@ -27,6 +27,14 @@ impl Document {
             filename: Some(filename),
             rows,
         }
+    }
+
+    pub fn row(&self, y: usize) -> Option<&Row> {
+        self.rows.get(y)
+    }
+
+    pub fn len(&self) -> usize {
+        self.rows.len()
     }
 }
 

@@ -153,7 +153,7 @@ impl Editor {
                 Key::Del => {}
                 Key::Home => self.cursor.x = 0,
                 Key::End => {
-                    if let Some(row) = self.document.rows.get(self.cursor.y) {
+                    if let Some(row) = self.document.row(self.cursor.y) {
                         self.cursor.x = row.len();
                     }
                 }
@@ -165,8 +165,8 @@ impl Editor {
                         }
                         Page::Down => {
                             self.cursor.y = self.row_offset + self.screen.rows - 1;
-                            if self.cursor.y > self.document.rows.len() {
-                                self.cursor.y = self.document.rows.len();
+                            if self.cursor.y > self.document.len() {
+                                self.cursor.y = self.document.len();
                             }
                             Arrow::Down
                         }
@@ -190,19 +190,19 @@ impl Editor {
     fn move_cursor(&mut self, key: &Arrow) {
         match key {
             Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
-            Arrow::Down if self.cursor.y < self.document.rows.len() => self.cursor.y += 1,
+            Arrow::Down if self.cursor.y < self.document.len() => self.cursor.y += 1,
             Arrow::Left => {
                 if self.cursor.x > 0 {
                     self.cursor.x -= 1
                 } else if self.cursor.y > 0 {
                     self.cursor.y -= 1;
-                    if let Some(row) = self.document.rows.get(self.cursor.y) {
+                    if let Some(row) = self.document.row(self.cursor.y) {
                         self.cursor.x = row.len();
                     }
                 }
             }
             Arrow::Right => {
-                if let Some(row) = self.document.rows.get(self.cursor.y) {
+                if let Some(row) = self.document.row(self.cursor.y) {
                     let chars_len = row.len();
                     if self.cursor.x < chars_len {
                         self.cursor.x += 1
@@ -214,7 +214,7 @@ impl Editor {
             }
             _ => {}
         }
-        if let Some(r) = self.document.rows.get(self.cursor.y) {
+        if let Some(r) = self.document.row(self.cursor.y) {
             if self.cursor.x > r.len() {
                 self.cursor.x = r.len();
             }
@@ -282,7 +282,7 @@ impl Editor {
     fn draw_rows(&self, buf: &mut String) {
         let width = self.screen.cols;
         let height = self.screen.rows;
-        let rows = self.document.rows.len();
+        let rows = self.document.len();
         for y in 0..height {
             let file_row = y + self.row_offset;
             if file_row >= rows {
@@ -297,7 +297,7 @@ impl Editor {
                     buf.push_str("~");
                 }
             } else {
-                if let Some(row) = self.document.rows.get(file_row) {
+                if let Some(row) = self.document.row(file_row) {
                     let chars = &row.render(self.col_offset, self.col_offset + width);
                     buf.push_str(chars);
                 }
@@ -315,8 +315,8 @@ impl Editor {
             None => String::from("[No Name]"),
         };
         filename.truncate(20);
-        let left = format!("{} - {} lines", filename, self.document.rows.len());
-        let right = format!("{}/{}", self.cursor.y, self.document.rows.len());
+        let left = format!("{} - {} lines", filename, self.document.len());
+        let right = format!("{}/{}", self.cursor.y, self.document.len());
         let rlen = right.len();
         let mut len = cmp::min(left.len(), self.screen.cols);
         buf.push_str(&left);
