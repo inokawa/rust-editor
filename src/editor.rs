@@ -158,7 +158,10 @@ impl Editor {
     fn process_key_press(&mut self) -> Result<bool, Error> {
         match self.decode_sequence() {
             Key::Escape => {}
-            Key::Enter => {}
+            Key::Enter => {
+                self.document.insert_newline(&self.cursor);
+                self.move_cursor(&Arrow::Right);
+            }
             Key::Backspace => {
                 if self.cursor.x > 0 || self.cursor.y > 0 {
                     self.move_cursor(&Arrow::Left);
@@ -296,9 +299,8 @@ impl Editor {
             b's' => Key::Arrow(Arrow::Down),
             b'a' => Key::Arrow(Arrow::Left),
             b'd' => Key::Arrow(Arrow::Right),
-            b'\r' => Key::Enter,
-            BACKSPACE => Key::Backspace,
-            DELETE_BIS => Key::Backspace,
+            b'\r' | b'\n' => Key::Enter,
+            BACKSPACE | DELETE_BIS => Key::Backspace,
             REFRESH_SCREEN => Key::Escape,
             SAVE => Key::Save,
             EXIT => Key::Exit,

@@ -38,6 +38,20 @@ impl Document {
         self.rows.len()
     }
 
+    pub fn insert_newline(&mut self, at: &Position) {
+        if at.y > self.len() {
+            return;
+        }
+        if at.y == self.len() || at.y + 1 == self.len() {
+            self.rows.push(Row::new());
+            return;
+        }
+        if let Some(row) = self.rows.get_mut(at.y) {
+            let new_row = row.split(at.x);
+            self.rows.insert(at.y + 1, new_row);
+        }
+    }
+
     pub fn insert(&mut self, c: char, at: &Position) {
         if at.y == self.len() {
             let mut row = Row::new();
@@ -142,5 +156,12 @@ impl Row {
 
     fn append(&mut self, new: &Self) {
         self.string.push_str(&new.string);
+    }
+
+    fn split(&mut self, at: usize) -> Self {
+        let first = self.string[..at].to_string();
+        let rest = self.string[at..].to_string();
+        self.string = first;
+        Row { string: rest }
     }
 }
