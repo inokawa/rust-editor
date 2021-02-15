@@ -14,17 +14,26 @@ const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
 
+const ESCAPE: u8 = b'\x1b';
 const EXIT: u8 = ctrl('q');
+const SAVE: u8 = ctrl('s');
+const DELETE_BIS: u8 = ctrl('h');
+const REFRESH_SCREEN: u8 = ctrl('l');
+const BACKSPACE: u8 = 127;
 
 enum Key {
     Escape,
     Exit,
+    Save,
+    Backspace,
     Del,
+    Enter,
     Home,
     End,
     Page(Page),
     Arrow(Arrow),
     Char(u8),
+    None,
 }
 
 enum Page {
@@ -150,6 +159,9 @@ impl Editor {
     fn process_key_press(&mut self) -> Result<bool, Error> {
         if let Ok(key) = self.decode_sequence() {
             match key {
+                Key::Escape => {}
+                Key::Enter => {}
+                Key::Backspace => {}
                 Key::Del => {}
                 Key::Home => self.cursor.x = 0,
                 Key::End => {
@@ -180,6 +192,7 @@ impl Editor {
                 Key::Arrow(k) => {
                     self.move_cursor(&k);
                 }
+                Key::Save => {}
                 Key::Exit => return Ok(true),
                 Key::Char(c) => self.document.insert(c as char, &self.cursor),
                 _ => {}
@@ -231,7 +244,7 @@ impl Editor {
             }
         }
         match b {
-            b'\x1b' => {
+            ESCAPE => {
                 match self.input.read() {
                     Some(b'[') => match self.input.read() {
                         Some(b'A') => return Ok(Key::Arrow(Arrow::Up)),
@@ -275,6 +288,11 @@ impl Editor {
             b's' => Ok(Key::Arrow(Arrow::Down)),
             b'a' => Ok(Key::Arrow(Arrow::Left)),
             b'd' => Ok(Key::Arrow(Arrow::Right)),
+            b'\r' => Ok(Key::Enter),
+            BACKSPACE => Ok(Key::Backspace),
+            DELETE_BIS => Ok(Key::Backspace),
+            REFRESH_SCREEN => Ok(Key::Escape),
+            SAVE => Ok(Key::Save),
             EXIT => Ok(Key::Exit),
             _ => Ok(Key::Char(b)),
         }
