@@ -49,6 +49,15 @@ impl Document {
             }
         }
     }
+
+    pub fn delete(&mut self, at: &Position) {
+        if at.y == self.len() {
+            return;
+        }
+        if let Some(row) = self.rows.get_mut(at.y) {
+            row.delete(at.x);
+        }
+    }
 }
 
 pub struct Row {
@@ -92,7 +101,7 @@ impl Row {
         })
     }
 
-    pub fn insert(&mut self, c: char, at: usize) {
+    fn insert(&mut self, c: char, at: usize) {
         if at >= self.len() {
             self.string.push(c);
         } else {
@@ -103,5 +112,18 @@ impl Row {
                 .map(|(i, ch)| if i == at { c } else { ch })
                 .collect();
         }
+    }
+
+    fn delete(&mut self, at: usize) {
+        if at >= self.len() {
+            return;
+        }
+        self.string = self
+            .string
+            .chars()
+            .enumerate()
+            .filter(|(i, _)| i != &at)
+            .map(|(_, c)| c)
+            .collect();
     }
 }

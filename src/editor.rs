@@ -160,7 +160,9 @@ impl Editor {
             Key::Escape => {}
             Key::Enter => {}
             Key::Backspace => {}
-            Key::Del => {}
+            Key::Del => {
+                self.document.delete(&self.cursor);
+            }
             Key::Home => self.cursor.x = 0,
             Key::End => {
                 if let Some(row) = self.document.row(self.cursor.y) {
