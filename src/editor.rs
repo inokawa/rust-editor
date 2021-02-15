@@ -156,50 +156,49 @@ impl Editor {
     }
 
     fn process_key_press(&mut self) -> Result<bool, Error> {
-        if let Ok(key) = self.decode_sequence() {
-            match key {
-                Key::Escape => {}
-                Key::Enter => {}
-                Key::Backspace => {}
-                Key::Del => {}
-                Key::Home => self.cursor.x = 0,
-                Key::End => {
-                    if let Some(row) = self.document.row(self.cursor.y) {
-                        self.cursor.x = row.len();
-                    }
+        match self.decode_sequence() {
+            Key::Escape => {}
+            Key::Enter => {}
+            Key::Backspace => {}
+            Key::Del => {}
+            Key::Home => self.cursor.x = 0,
+            Key::End => {
+                if let Some(row) = self.document.row(self.cursor.y) {
+                    self.cursor.x = row.len();
                 }
-                Key::Page(k) => {
-                    let direction = match k {
-                        Page::Up => {
-                            self.cursor.y = self.row_offset;
-                            Arrow::Up
-                        }
-                        Page::Down => {
-                            self.cursor.y = self.row_offset + self.screen.rows - 1;
-                            if self.cursor.y > self.document.len() {
-                                self.cursor.y = self.document.len();
-                            }
-                            Arrow::Down
-                        }
-                    };
-                    let mut times = self.screen.rows;
-                    while times > 0 {
-                        self.move_cursor(&direction);
-                        times -= 1;
-                    }
-                }
-                Key::Arrow(k) => {
-                    self.move_cursor(&k);
-                }
-                Key::Save => {}
-                Key::Exit => return Ok(true),
-                Key::Char(c) => {
-                    self.document.insert(c, &self.cursor);
-                    self.move_cursor(&Arrow::Right);
-                }
-                _ => {}
             }
+            Key::Page(k) => {
+                let direction = match k {
+                    Page::Up => {
+                        self.cursor.y = self.row_offset;
+                        Arrow::Up
+                    }
+                    Page::Down => {
+                        self.cursor.y = self.row_offset + self.screen.rows - 1;
+                        if self.cursor.y > self.document.len() {
+                            self.cursor.y = self.document.len();
+                        }
+                        Arrow::Down
+                    }
+                };
+                let mut times = self.screen.rows;
+                while times > 0 {
+                    self.move_cursor(&direction);
+                    times -= 1;
+                }
+            }
+            Key::Arrow(k) => {
+                self.move_cursor(&k);
+            }
+            Key::Save => {}
+            Key::Exit => return Ok(true),
+            Key::Char(c) => {
+                self.document.insert(c, &self.cursor);
+                self.move_cursor(&Arrow::Right);
+            }
+            _ => {}
         }
+
         Ok(false)
     }
 
@@ -237,7 +236,7 @@ impl Editor {
         }
     }
 
-    fn decode_sequence(&mut self) -> Result<Key, Error> {
+    fn decode_sequence(&mut self) -> Key {
         let b: u8;
         loop {
             if let Some(res) = self.input.read() {
@@ -249,54 +248,54 @@ impl Editor {
             ESCAPE => {
                 match self.input.read() {
                     Some(b'[') => match self.input.read() {
-                        Some(b'A') => return Ok(Key::Arrow(Arrow::Up)),
-                        Some(b'B') => return Ok(Key::Arrow(Arrow::Down)),
-                        Some(b'C') => return Ok(Key::Arrow(Arrow::Right)),
-                        Some(b'D') => return Ok(Key::Arrow(Arrow::Left)),
-                        Some(b'H') => return Ok(Key::Home),
-                        Some(b'F') => return Ok(Key::End),
+                        Some(b'A') => return Key::Arrow(Arrow::Up),
+                        Some(b'B') => return Key::Arrow(Arrow::Down),
+                        Some(b'C') => return Key::Arrow(Arrow::Right),
+                        Some(b'D') => return Key::Arrow(Arrow::Left),
+                        Some(b'H') => return Key::Home,
+                        Some(b'F') => return Key::End,
                         Some(b'3') => match self.input.read() {
-                            Some(b'~') => return Ok(Key::Del),
+                            Some(b'~') => return Key::Del,
                             _ => {}
                         },
                         Some(b'1') | Some(b'7') => match self.input.read() {
-                            Some(b'~') => return Ok(Key::Home),
+                            Some(b'~') => return Key::Home,
                             _ => {}
                         },
                         Some(b'4') | Some(b'8') => match self.input.read() {
-                            Some(b'~') => return Ok(Key::End),
+                            Some(b'~') => return Key::End,
                             _ => {}
                         },
                         Some(b'5') => match self.input.read() {
-                            Some(b'~') => return Ok(Key::Page(Page::Up)),
+                            Some(b'~') => return Key::Page(Page::Up),
                             _ => {}
                         },
                         Some(b'6') => match self.input.read() {
-                            Some(b'~') => return Ok(Key::Page(Page::Down)),
+                            Some(b'~') => return Key::Page(Page::Down),
                             _ => {}
                         },
                         _ => {}
                     },
                     Some(b'O') => match self.input.read() {
-                        Some(b'H') => return Ok(Key::Home),
-                        Some(b'F') => return Ok(Key::End),
+                        Some(b'H') => return Key::Home,
+                        Some(b'F') => return Key::End,
                         _ => {}
                     },
                     _ => {}
                 }
-                Ok(Key::Escape)
+                Key::Escape
             }
-            b'w' => Ok(Key::Arrow(Arrow::Up)),
-            b's' => Ok(Key::Arrow(Arrow::Down)),
-            b'a' => Ok(Key::Arrow(Arrow::Left)),
-            b'd' => Ok(Key::Arrow(Arrow::Right)),
-            b'\r' => Ok(Key::Enter),
-            BACKSPACE => Ok(Key::Backspace),
-            DELETE_BIS => Ok(Key::Backspace),
-            REFRESH_SCREEN => Ok(Key::Escape),
-            SAVE => Ok(Key::Save),
-            EXIT => Ok(Key::Exit),
-            _ => Ok(Key::Char(b as char)),
+            b'w' => Key::Arrow(Arrow::Up),
+            b's' => Key::Arrow(Arrow::Down),
+            b'a' => Key::Arrow(Arrow::Left),
+            b'd' => Key::Arrow(Arrow::Right),
+            b'\r' => Key::Enter,
+            BACKSPACE => Key::Backspace,
+            DELETE_BIS => Key::Backspace,
+            REFRESH_SCREEN => Key::Escape,
+            SAVE => Key::Save,
+            EXIT => Key::Exit,
+            _ => Key::Char(b as char),
         }
     }
 
