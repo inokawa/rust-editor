@@ -51,11 +51,24 @@ impl Document {
     }
 
     pub fn delete(&mut self, at: &Position) {
-        if at.y == self.len() {
+        let len = self.len();
+        if at.y >= len {
             return;
         }
-        if let Some(row) = self.rows.get_mut(at.y) {
-            row.delete(at.x);
+
+        let row_len = match self.rows.get(at.y) {
+            Some(row) => row.len(),
+            None => return,
+        };
+        if at.x == row_len && at.y < len - 1 {
+            let next_row = self.rows.remove(at.y + 1);
+            if let Some(row) = self.rows.get_mut(at.y) {
+                row.append(&next_row);
+            }
+        } else {
+            if let Some(row) = self.rows.get_mut(at.y) {
+                row.delete(at.x);
+            }
         }
     }
 }
@@ -125,5 +138,9 @@ impl Row {
             .filter(|(i, _)| i != &at)
             .map(|(_, c)| c)
             .collect();
+    }
+
+    fn append(&mut self, new: &Self) {
+        self.string.push_str(&new.string);
     }
 }
