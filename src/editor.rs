@@ -159,7 +159,12 @@ impl Editor {
         match self.decode_sequence() {
             Key::Escape => {}
             Key::Enter => {}
-            Key::Backspace => {}
+            Key::Backspace => {
+                if self.cursor.x > 0 || self.cursor.y > 0 {
+                    self.move_cursor(&Arrow::Left);
+                    self.document.delete(&self.cursor);
+                }
+            }
             Key::Del => {
                 self.document.delete(&self.cursor);
             }
