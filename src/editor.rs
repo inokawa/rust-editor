@@ -193,7 +193,10 @@ impl Editor {
                 }
                 Key::Save => {}
                 Key::Exit => return Ok(true),
-                Key::Char(c) => self.document.insert(c, &self.cursor),
+                Key::Char(c) => {
+                    self.document.insert(c, &self.cursor);
+                    self.move_cursor(&Arrow::Right);
+                }
                 _ => {}
             }
         }
