@@ -132,12 +132,11 @@ impl Row {
         if at >= self.len() {
             self.string.push(c);
         } else {
-            self.string = self
-                .string
-                .chars()
-                .enumerate()
-                .map(|(i, ch)| if i == at { c } else { ch })
-                .collect();
+            let mut first = self.string[..at].to_string();
+            let rest = &self.string[at..];
+            first.push(c);
+            first.push_str(rest);
+            self.string = first;
         }
     }
 
