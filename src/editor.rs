@@ -5,6 +5,7 @@ use super::{
 use std::{
     cmp,
     io::{self, Write},
+    time::{Duration, Instant},
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -48,6 +49,20 @@ struct Position {
     y: usize,
 }
 
+struct Message {
+    text: String,
+    time: Instant,
+}
+
+impl Message {
+    fn new(text: String) -> Self {
+        Message {
+            text,
+            time: Instant::now(),
+        }
+    }
+}
+
 pub struct Editor {
     input: StdinRaw,
     screen: Screen,
@@ -55,6 +70,7 @@ pub struct Editor {
     row_offset: usize,
     col_offset: usize,
     document: Document,
+    message: Option<Message>,
 }
 
 impl Editor {
@@ -63,13 +79,14 @@ impl Editor {
             Ok(Editor {
                 input: stdin,
                 screen: Screen {
-                    rows: screen_rows - 1,
+                    rows: screen_rows - 2,
                     cols: screen_cols,
                 },
                 cursor: Position { x: 0, y: 0 },
                 row_offset: 0,
                 col_offset: 0,
                 document,
+                message: Some(Message::new(String::from("HELP: Ctrl-Q = quit"))),
             })
         } else {
             Err(Error::Init)
@@ -100,6 +117,7 @@ impl Editor {
 
         self.draw_rows(&mut buf);
         self.draw_status_bar(&mut buf);
+        self.draw_message_bar(&mut buf);
 
         buf.push_str(MOVE_CURSOR_TO_START);
         buf.push_str(&format!(
@@ -312,5 +330,17 @@ impl Editor {
             }
         }
         buf.push_str(RESET_FMT);
+        buf.push_str("\r\n");
+    }
+
+    fn draw_message_bar(&self, buf: &mut String) {
+        buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
+        if let Some(message) = &self.message {
+            if Instant::now() - message.time < Duration::new(5, 0) {
+                let mut text = message.text.clone();
+                text.truncate(self.screen.cols);
+                buf.push_str(&text);
+            }
+        }
     }
 }
