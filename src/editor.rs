@@ -103,9 +103,9 @@ impl Editor {
         }
     }
 
-    pub fn open(&mut self, filename: &String) -> Result<(), Error> {
-        let document = self.filer.load(&filename)?;
-        self.document = document;
+    pub fn load(&mut self, filename: &String) -> Result<(), Error> {
+        let file = self.filer.load(&filename)?;
+        self.document = Document::open(filename.clone(), file);
         Ok(())
     }
 
