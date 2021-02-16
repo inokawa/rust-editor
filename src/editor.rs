@@ -96,7 +96,9 @@ impl Editor {
                 row_offset: 0,
                 col_offset: 0,
                 document: Document::new(),
-                message: Some(Message::new(String::from("HELP: Ctrl-Q = quit"))),
+                message: Some(Message::new(String::from(
+                    "HELP: Ctrl-S = save | Ctrl-Q = quit",
+                ))),
             })
         } else {
             Err(Error::Init)
@@ -107,6 +109,21 @@ impl Editor {
         let file = self.filer.load(&filename)?;
         self.document = Document::open(filename.clone(), file);
         Ok(())
+    }
+
+    pub fn save(&mut self) {
+        if self.document.filename.is_none() {
+            self.document.filename = Some(String::from("TODO"));
+        }
+        let filename = self.document.filename.clone().unwrap();
+        match self.filer.save(&filename, self.document.contents()) {
+            Ok(_) => {
+                self.message = Some(Message::new("File saved successfully.".to_string()));
+            }
+            _ => {
+                self.message = Some(Message::new("Error writing file!".to_string()));
+            }
+        }
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
@@ -208,7 +225,9 @@ impl Editor {
             Key::Arrow(k) => {
                 self.move_cursor(&k);
             }
-            Key::Save => {}
+            Key::Save => {
+                self.save();
+            }
             Key::Exit => return Ok(true),
             Key::Char(c) => {
                 self.document.insert(c, &self.cursor);
