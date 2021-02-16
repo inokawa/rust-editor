@@ -1,5 +1,5 @@
 use super::{
-    ansi_escape::*, document::Document, error::Error, input_unix::StdinRaw,
+    ansi_escape::*, document::Document, error::Error, filer::Filer, input_unix::StdinRaw,
     output_unix::get_window_size,
 };
 use std::{
@@ -73,6 +73,7 @@ impl Message {
 
 pub struct Editor {
     input: StdinRaw,
+    filer: Filer,
     screen: Screen,
     cursor: Position,
     row_offset: usize,
@@ -82,10 +83,11 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(stdin: StdinRaw, document: Document) -> Result<Self, Error> {
+    pub fn new(stdin: StdinRaw, filer: Filer) -> Result<Self, Error> {
         if let Some((screen_rows, screen_cols)) = get_window_size() {
             Ok(Editor {
                 input: stdin,
+                filer,
                 screen: Screen {
                     rows: screen_rows - 2,
                     cols: screen_cols,
@@ -93,12 +95,18 @@ impl Editor {
                 cursor: Position { x: 0, y: 0 },
                 row_offset: 0,
                 col_offset: 0,
-                document,
+                document: Document::new(),
                 message: Some(Message::new(String::from("HELP: Ctrl-Q = quit"))),
             })
         } else {
             Err(Error::Init)
         }
+    }
+
+    pub fn open(&mut self, filename: &String) -> Result<(), Error> {
+        let document = self.filer.load(&filename)?;
+        self.document = document;
+        Ok(())
     }
 
     pub fn run(&mut self) -> Result<(), Error> {

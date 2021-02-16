@@ -30,6 +30,10 @@ impl Document {
         }
     }
 
+    pub fn contents(&self) -> Vec<String> {
+        self.rows.iter().map(|r| r.string.clone()).collect()
+    }
+
     pub fn row(&self, y: usize) -> Option<&Row> {
         self.rows.get(y)
     }

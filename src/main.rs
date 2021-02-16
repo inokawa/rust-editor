@@ -1,6 +1,4 @@
-use rust_editor::{
-    document::Document, editor::Editor, error::Error, filer::Filer, input_unix::StdinRaw,
-};
+use rust_editor::{editor::Editor, error::Error, filer::Filer, input_unix::StdinRaw};
 use std::env;
 
 fn main() -> Result<(), Error> {
@@ -8,10 +6,10 @@ fn main() -> Result<(), Error> {
 
     let input = StdinRaw::new()?;
     if let Some(filename) = args.get(1) {
-        let filer = Filer::new();
-        let doc = filer.load(filename)?;
-        Editor::new(input, doc)?.run()
+        let mut editor = Editor::new(input, Filer::new())?;
+        editor.open(filename)?;
+        editor.run()
     } else {
-        Editor::new(input, Document::new())?.run()
+        Editor::new(input, Filer::new())?.run()
     }
 }
