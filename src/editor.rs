@@ -295,10 +295,6 @@ impl Editor {
                 }
                 Key::Escape
             }
-            b'w' => Key::Arrow(Arrow::Up),
-            b's' => Key::Arrow(Arrow::Down),
-            b'a' => Key::Arrow(Arrow::Left),
-            b'd' => Key::Arrow(Arrow::Right),
             b'\r' | b'\n' => Key::Enter,
             BACKSPACE | DELETE_BIS => Key::Backspace,
             REFRESH_SCREEN => Key::Escape,
