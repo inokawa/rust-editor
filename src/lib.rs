@@ -5,4 +5,5 @@ pub mod error;
 pub mod filer;
 pub mod input_trait;
 pub mod input_unix;
+pub mod output_trait;
 pub mod output_unix;

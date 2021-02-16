@@ -1,10 +1,9 @@
 use super::{
     ansi_escape::*, document::Document, error::Error, filer::Filer, input_trait::Input,
-    output_unix::get_window_size,
+    output_trait::Output,
 };
 use std::{
     cmp,
-    io::{self, Write},
     time::{Duration, Instant},
 };
 
@@ -71,8 +70,9 @@ impl Message {
     }
 }
 
-pub struct Editor<T: Input> {
+pub struct Editor<T: Input, U: Output> {
     input: T,
+    output: U,
     filer: Filer,
     screen: Screen,
     cursor: Position,
@@ -82,11 +82,12 @@ pub struct Editor<T: Input> {
     message: Option<Message>,
 }
 
-impl<T: Input> Editor<T> {
-    pub fn new(input: T, filer: Filer) -> Result<Self, Error> {
-        if let Some((screen_rows, screen_cols)) = get_window_size() {
+impl<T: Input, U: Output> Editor<T, U> {
+    pub fn new(input: T, output: U, filer: Filer) -> Result<Self, Error> {
+        if let Some((screen_rows, screen_cols)) = output.get_window_size() {
             Ok(Editor {
                 input,
+                output,
                 filer,
                 screen: Screen {
                     rows: screen_rows - 2,
@@ -134,7 +135,7 @@ impl<T: Input> Editor<T> {
                 let mut buf = String::new();
                 buf.push_str(CLEAR_SCREEN);
                 buf.push_str(MOVE_CURSOR_TO_START);
-                print!("{}", buf);
+                self.output.render(buf)?;
                 break;
             }
         }
@@ -160,8 +161,7 @@ impl<T: Input> Editor<T> {
         ));
         buf.push_str(SHOW_CURSOR);
 
-        print!("{}", buf);
-        io::stdout().flush()?;
+        self.output.render(buf)?;
         Ok(())
     }
 
