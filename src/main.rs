@@ -1,4 +1,6 @@
-use rust_editor::{editor::Editor, error::Error, filer::Filer, input_unix::StdinRaw};
+use rust_editor::{
+    editor::Editor, error::Error, filer::Filer, input_trait::Input, input_unix::StdinRaw,
+};
 use std::env;
 
 fn main() -> Result<(), Error> {

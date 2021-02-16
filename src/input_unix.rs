@@ -1,4 +1,4 @@
-use super::{ansi_escape::*, error::Error};
+use super::{ansi_escape::*, error::Error, input_trait::Input};
 use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,
@@ -10,8 +10,8 @@ pub struct StdinRaw {
     orig: termios,
 }
 
-impl StdinRaw {
-    pub fn new() -> Result<Self, Error> {
+impl Input for StdinRaw {
+    fn new() -> Result<Self, Error> {
         let mut term = termios {
             c_iflag: 0,
             c_oflag: 0,
@@ -45,7 +45,7 @@ impl StdinRaw {
         Ok(StdinRaw { orig })
     }
 
-    pub fn read(&self) -> Option<u8> {
+    fn read(&self) -> Option<u8> {
         if let Some(b) = io::stdin().bytes().next() {
             b.map(|b| Some(b)).unwrap_or(None)
         } else {

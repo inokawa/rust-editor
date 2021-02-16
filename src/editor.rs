@@ -1,5 +1,5 @@
 use super::{
-    ansi_escape::*, document::Document, error::Error, filer::Filer, input_unix::StdinRaw,
+    ansi_escape::*, document::Document, error::Error, filer::Filer, input_trait::Input,
     output_unix::get_window_size,
 };
 use std::{
@@ -71,8 +71,8 @@ impl Message {
     }
 }
 
-pub struct Editor {
-    input: StdinRaw,
+pub struct Editor<T: Input> {
+    input: T,
     filer: Filer,
     screen: Screen,
     cursor: Position,
@@ -82,11 +82,11 @@ pub struct Editor {
     message: Option<Message>,
 }
 
-impl Editor {
-    pub fn new(stdin: StdinRaw, filer: Filer) -> Result<Self, Error> {
+impl<T: Input> Editor<T> {
+    pub fn new(input: T, filer: Filer) -> Result<Self, Error> {
         if let Some((screen_rows, screen_cols)) = get_window_size() {
             Ok(Editor {
-                input: stdin,
+                input,
                 filer,
                 screen: Screen {
                     rows: screen_rows - 2,
