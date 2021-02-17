@@ -11,18 +11,7 @@ use std::{
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const fn ctrl(c: char) -> u8 {
-    (c as u8) & 0b0001_1111
-}
-
-const ESCAPE: u8 = b'\x1b';
-const EXIT: u8 = ctrl('q');
-const SAVE: u8 = ctrl('s');
-const DELETE_BIS: u8 = ctrl('h');
-const REFRESH_SCREEN: u8 = ctrl('l');
-const BACKSPACE: u8 = 127;
-
-enum Key {
+pub enum Key {
     Escape,
     Exit,
     Save,
@@ -36,12 +25,12 @@ enum Key {
     Char(char),
 }
 
-enum Page {
+pub enum Page {
     Up,
     Down,
 }
 
-enum Arrow {
+pub enum Arrow {
     Up,
     Down,
     Left,
@@ -72,10 +61,10 @@ impl Message {
     }
 }
 
-pub struct Editor<T: Input, U: Output, V: Filer> {
-    input: T,
-    output: U,
-    filer: V,
+pub struct Editor<I: Input, O: Output, F: Filer> {
+    input: I,
+    output: O,
+    filer: F,
     screen: Screen,
     cursor: Position,
     row_offset: usize,
@@ -84,8 +73,8 @@ pub struct Editor<T: Input, U: Output, V: Filer> {
     message: Option<Message>,
 }
 
-impl<T: Input, U: Output, V: Filer> Editor<T, U, V> {
-    pub fn new(input: T, output: U, filer: V) -> Result<Self, Error> {
+impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
+    pub fn new(input: I, output: O, filer: F) -> Result<Self, Error> {
         if let Some((screen_rows, screen_cols)) = output.get_window_size() {
             Ok(Editor {
                 input,
@@ -183,7 +172,7 @@ impl<T: Input, U: Output, V: Filer> Editor<T, U, V> {
     }
 
     fn process_key_press(&mut self) -> Result<bool, Error> {
-        match self.decode_sequence() {
+        match self.input.wait_for_key() {
             Key::Escape => {}
             Key::Enter => {
                 self.document.insert_newline(&self.cursor);
@@ -272,64 +261,6 @@ impl<T: Input, U: Output, V: Filer> Editor<T, U, V> {
             if self.cursor.x > r.len() {
                 self.cursor.x = r.len();
             }
-        }
-    }
-
-    fn decode_sequence(&mut self) -> Key {
-        let b: u8;
-        loop {
-            if let Some(res) = self.input.read() {
-                b = res;
-                break;
-            }
-        }
-        match b {
-            ESCAPE => {
-                match self.input.read() {
-                    Some(b'[') => match self.input.read() {
-                        Some(b'A') => return Key::Arrow(Arrow::Up),
-                        Some(b'B') => return Key::Arrow(Arrow::Down),
-                        Some(b'C') => return Key::Arrow(Arrow::Right),
-                        Some(b'D') => return Key::Arrow(Arrow::Left),
-                        Some(b'H') => return Key::Home,
-                        Some(b'F') => return Key::End,
-                        Some(b'3') => match self.input.read() {
-                            Some(b'~') => return Key::Del,
-                            _ => {}
-                        },
-                        Some(b'1') | Some(b'7') => match self.input.read() {
-                            Some(b'~') => return Key::Home,
-                            _ => {}
-                        },
-                        Some(b'4') | Some(b'8') => match self.input.read() {
-                            Some(b'~') => return Key::End,
-                            _ => {}
-                        },
-                        Some(b'5') => match self.input.read() {
-                            Some(b'~') => return Key::Page(Page::Up),
-                            _ => {}
-                        },
-                        Some(b'6') => match self.input.read() {
-                            Some(b'~') => return Key::Page(Page::Down),
-                            _ => {}
-                        },
-                        _ => {}
-                    },
-                    Some(b'O') => match self.input.read() {
-                        Some(b'H') => return Key::Home,
-                        Some(b'F') => return Key::End,
-                        _ => {}
-                    },
-                    _ => {}
-                }
-                Key::Escape
-            }
-            b'\r' | b'\n' => Key::Enter,
-            BACKSPACE | DELETE_BIS => Key::Backspace,
-            REFRESH_SCREEN => Key::Escape,
-            SAVE => Key::Save,
-            EXIT => Key::Exit,
-            _ => Key::Char(b as char),
         }
     }
 

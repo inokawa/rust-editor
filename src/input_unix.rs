@@ -1,13 +1,39 @@
-use super::{ansi_escape::*, error::Error, traits::Input};
+use super::{
+    ansi_escape::*,
+    editor::{Arrow, Key, Page},
+    error::Error,
+    traits::Input,
+};
 use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,
 };
 use std::io::{self, Read};
 
+const fn ctrl(c: char) -> u8 {
+    (c as u8) & 0b0001_1111
+}
+
+const ESCAPE: u8 = b'\x1b';
+const EXIT: u8 = ctrl('q');
+const SAVE: u8 = ctrl('s');
+const DELETE_BIS: u8 = ctrl('h');
+const REFRESH_SCREEN: u8 = ctrl('l');
+const BACKSPACE: u8 = 127;
+
 #[cfg(unix)]
 pub struct StdinRaw {
     orig: termios,
+}
+
+impl StdinRaw {
+    fn read(&self) -> Option<u8> {
+        if let Some(b) = io::stdin().bytes().next() {
+            b.map(|b| Some(b)).unwrap_or(None)
+        } else {
+            None
+        }
+    }
 }
 
 impl Input for StdinRaw {
@@ -45,11 +71,61 @@ impl Input for StdinRaw {
         Ok(StdinRaw { orig })
     }
 
-    fn read(&self) -> Option<u8> {
-        if let Some(b) = io::stdin().bytes().next() {
-            b.map(|b| Some(b)).unwrap_or(None)
-        } else {
-            None
+    fn wait_for_key(&self) -> Key {
+        let b: u8;
+        loop {
+            if let Some(res) = self.read() {
+                b = res;
+                break;
+            }
+        }
+        match b {
+            ESCAPE => {
+                match self.read() {
+                    Some(b'[') => match self.read() {
+                        Some(b'A') => return Key::Arrow(Arrow::Up),
+                        Some(b'B') => return Key::Arrow(Arrow::Down),
+                        Some(b'C') => return Key::Arrow(Arrow::Right),
+                        Some(b'D') => return Key::Arrow(Arrow::Left),
+                        Some(b'H') => return Key::Home,
+                        Some(b'F') => return Key::End,
+                        Some(b'3') => match self.read() {
+                            Some(b'~') => return Key::Del,
+                            _ => {}
+                        },
+                        Some(b'1') | Some(b'7') => match self.read() {
+                            Some(b'~') => return Key::Home,
+                            _ => {}
+                        },
+                        Some(b'4') | Some(b'8') => match self.read() {
+                            Some(b'~') => return Key::End,
+                            _ => {}
+                        },
+                        Some(b'5') => match self.read() {
+                            Some(b'~') => return Key::Page(Page::Up),
+                            _ => {}
+                        },
+                        Some(b'6') => match self.read() {
+                            Some(b'~') => return Key::Page(Page::Down),
+                            _ => {}
+                        },
+                        _ => {}
+                    },
+                    Some(b'O') => match self.read() {
+                        Some(b'H') => return Key::Home,
+                        Some(b'F') => return Key::End,
+                        _ => {}
+                    },
+                    _ => {}
+                }
+                Key::Escape
+            }
+            b'\r' | b'\n' => Key::Enter,
+            BACKSPACE | DELETE_BIS => Key::Backspace,
+            REFRESH_SCREEN => Key::Escape,
+            SAVE => Key::Save,
+            EXIT => Key::Exit,
+            _ => Key::Char(b as char),
         }
     }
 }
