@@ -1,19 +1,19 @@
-use super::error::Error;
+use super::{error::Error, traits::Filer};
 use std::{fs, io::Write};
 
-pub struct Filer {}
+pub struct Fs {}
 
-impl Filer {
-    pub fn new() -> Self {
-        Filer {}
+impl Filer for Fs {
+    fn new() -> Self {
+        Fs {}
     }
 
-    pub fn load(&self, filename: &String) -> Result<String, Error> {
+    fn load(&self, filename: &String) -> Result<String, Error> {
         let file = fs::read_to_string(&filename)?;
         Ok(file)
     }
 
-    pub fn save(&self, filename: &String, contents: Vec<String>) -> Result<(), Error> {
+    fn save(&self, filename: &String, contents: Vec<String>) -> Result<(), Error> {
         let mut file = fs::File::create(filename)?;
         for row in &contents {
             file.write_all(row.as_bytes())?;

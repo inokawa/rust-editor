@@ -1,4 +1,4 @@
-use super::{ansi_escape::*, error::Error, input_trait::Input};
+use super::{ansi_escape::*, error::Error, traits::Input};
 use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,

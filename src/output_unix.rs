@@ -1,4 +1,4 @@
-use super::{error::Error, output_trait::Output};
+use super::{error::Error, traits::Output};
 use libc::*;
 use std::{
     io::{self, Write},

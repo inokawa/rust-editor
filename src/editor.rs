@@ -1,6 +1,8 @@
 use super::{
-    ansi_escape::*, document::Document, error::Error, filer::Filer, input_trait::Input,
-    output_trait::Output,
+    ansi_escape::*,
+    document::Document,
+    error::Error,
+    traits::{Filer, Input, Output},
 };
 use std::{
     cmp,
@@ -70,10 +72,10 @@ impl Message {
     }
 }
 
-pub struct Editor<T: Input, U: Output> {
+pub struct Editor<T: Input, U: Output, V: Filer> {
     input: T,
     output: U,
-    filer: Filer,
+    filer: V,
     screen: Screen,
     cursor: Position,
     row_offset: usize,
@@ -82,8 +84,8 @@ pub struct Editor<T: Input, U: Output> {
     message: Option<Message>,
 }
 
-impl<T: Input, U: Output> Editor<T, U> {
-    pub fn new(input: T, output: U, filer: Filer) -> Result<Self, Error> {
+impl<T: Input, U: Output, V: Filer> Editor<T, U, V> {
+    pub fn new(input: T, output: U, filer: V) -> Result<Self, Error> {
         if let Some((screen_rows, screen_cols)) = output.get_window_size() {
             Ok(Editor {
                 input,
