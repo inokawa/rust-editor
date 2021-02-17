@@ -1,6 +1,6 @@
 # rust-editor
 
-wip
+WIP
 
 An implementation of [kilo](https://github.com/antirez/kilo) text editor with Rust.
 
@@ -19,5 +19,5 @@ And thank you for other great implementations of kilo:
 ```sh
 git clone git@github.com:inokawa/rust-editor.git
 cd rust-editor
-cargo run
+cargo run "path/to/file.txt"
 ```
