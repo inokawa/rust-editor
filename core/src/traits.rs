@@ -1,4 +1,7 @@
-use super::{editor::Key, error::Error};
+use super::{
+    editor::{Key, Position},
+    error::Error,
+};
 
 pub trait Input {
     fn new() -> Result<Self, Error>
@@ -9,6 +12,8 @@ pub trait Input {
 
 pub trait Output {
     fn new() -> Self;
+    fn clear_screen(&self) -> Result<(), Error>;
+    fn move_cursor(&self, pos: Position) -> Result<(), Error>;
     fn render(&self, text: String) -> Result<(), Error>;
     fn get_window_size(&self) -> Option<(usize, usize)>;
 }

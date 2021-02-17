@@ -123,10 +123,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             self.refresh_screen()?;
             let quit = self.process_key_press()?;
             if quit == true {
-                let mut buf = String::new();
-                buf.push_str(CLEAR_SCREEN);
-                buf.push_str(MOVE_CURSOR_TO_START);
-                self.output.render(buf)?;
+                self.output.clear_screen()?;
                 break;
             }
         }
@@ -143,16 +140,14 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         self.draw_rows(&mut buf);
         self.draw_status_bar(&mut buf);
         self.draw_message_bar(&mut buf);
-
-        buf.push_str(MOVE_CURSOR_TO_START);
-        buf.push_str(&format!(
-            "\x1b[{};{}H",
-            (self.cursor.y - self.row_offset) + 1,
-            (self.cursor.x - self.col_offset) + 1
-        ));
-        buf.push_str(SHOW_CURSOR);
-
         self.output.render(buf)?;
+
+        self.output.move_cursor(Position {
+            x: (self.cursor.x - self.col_offset) + 1,
+            y: (self.cursor.y - self.row_offset) + 1,
+        })?;
+        self.output.render(SHOW_CURSOR.to_string())?;
+
         Ok(())
     }
 
