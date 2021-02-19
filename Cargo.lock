@@ -123,20 +123,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-webpack-template"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "futures",
- "js-sys",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
- "wee_alloc",
-]
-
-[[package]]
 name = "scoped-tls"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -267,6 +253,21 @@ checksum = "0789dac148a8840bbcf9efe13905463b733fa96543bfbf263790535c11af7ba5"
 dependencies = [
  "proc-macro2 0.4.30",
  "quote 0.6.13",
+]
+
+[[package]]
+name = "web"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "core",
+ "futures",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
+ "wee_alloc",
 ]
 
 [[package]]
