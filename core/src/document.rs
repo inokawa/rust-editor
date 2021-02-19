@@ -156,10 +156,10 @@ impl Row {
         if at >= self.len() {
             self.string.push(c);
         } else {
-            let mut first = self.string[..at].to_string();
-            let rest = &self.string[at..];
+            let mut first: String = self.string.graphemes(true).take(at).collect();
+            let rest: String = self.string.graphemes(true).skip(at).collect();
             first.push(c);
-            first.push_str(rest);
+            first.push_str(&rest);
             self.string = first;
         }
     }
@@ -170,7 +170,7 @@ impl Row {
         }
         self.string = self
             .string
-            .chars()
+            .graphemes(true)
             .enumerate()
             .filter(|(i, _)| i != &at)
             .map(|(_, c)| c)
@@ -182,8 +182,8 @@ impl Row {
     }
 
     fn split(&mut self, at: usize) -> Self {
-        let first = self.string[..at].to_string();
-        let rest = self.string[at..].to_string();
+        let first = self.string.graphemes(true).take(at).collect();
+        let rest = self.string.graphemes(true).skip(at).collect();
         self.string = first;
         Row { string: rest }
     }
