@@ -1,4 +1,4 @@
-use rust_editor::{
+use core::{
     editor::Editor,
     error::Error,
     filer_unix::Fs,

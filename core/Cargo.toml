@@ -1,5 +1,5 @@
 [package]
-name = "rust-editor"
+name = "core"
 version = "0.1.0"
 authors = ["inokawa <48897392+inokawa@users.noreply.github.com>"]
 edition = "2018"
