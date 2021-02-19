@@ -142,10 +142,12 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         self.draw_message_bar(&mut buf);
         self.output.render(buf)?;
 
-        self.output.move_cursor(Position {
-            x: (self.cursor.x - self.col_offset) + 1,
-            y: (self.cursor.y - self.row_offset) + 1,
-        })?;
+        if let Some(row) = self.document.row(self.cursor.y) {
+            self.output.move_cursor(Position {
+                x: (row.get_width(0, self.cursor.x - self.col_offset) + 1),
+                y: (self.cursor.y - self.row_offset) + 1,
+            })?;
+        }
         self.output.render(SHOW_CURSOR.to_string())?;
 
         Ok(())

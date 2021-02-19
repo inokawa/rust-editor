@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 libc = "0.2.85"
+unicode-segmentation = "1.7.1"
+unicode-width = "0.1.8"

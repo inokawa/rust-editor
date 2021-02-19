@@ -1,5 +1,7 @@
 use super::editor::Position;
 use std::cmp;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 const TAB_STOP: usize = 4;
 
@@ -106,8 +108,10 @@ impl Row {
         if start > end {
             return String::from("");
         }
+        let start = cmp::max(0, start);
+        let end = cmp::min(self.string.len(), end);
         self.string
-            .get(cmp::max(0, start)..cmp::min(self.string.len(), end))
+            .get(start..end)
             .map(|c| {
                 c.chars()
                     .map(|c| {
@@ -122,9 +126,25 @@ impl Row {
             .unwrap_or(String::from(""))
     }
 
+    pub fn get_width(&self, start: usize, end: usize) -> usize {
+        let start = cmp::max(0, start);
+        let end = cmp::min(self.string.graphemes(true).count(), end);
+        self.string
+            .graphemes(true)
+            .skip(start)
+            .take(end - start)
+            .fold(0, |acc, s| {
+                if s == "\t" {
+                    acc + 1 * TAB_STOP
+                } else {
+                    acc + UnicodeWidthStr::width(s)
+                }
+            })
+    }
+
     pub fn len(&self) -> usize {
-        self.string.chars().fold(0, |acc, c| {
-            if c == '\t' {
+        self.string.graphemes(true).fold(0, |acc, c| {
+            if c == "\t" {
                 acc + 1 * TAB_STOP
             } else {
                 acc + 1
