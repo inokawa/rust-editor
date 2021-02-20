@@ -1,9 +1,4 @@
-use core::{
-    editor::Editor,
-    error::Error,
-    traits::{Filer, Input, Output},
-    unix::{filer::Fs, input::StdinRaw, output::Stdout},
-};
+use core::{Editor, Error, Filer, Fs, Input, Output, StdinRaw, Stdout};
 use std::env;
 
 fn main() -> Result<(), Error> {
