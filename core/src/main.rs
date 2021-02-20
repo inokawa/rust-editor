@@ -1,10 +1,8 @@
 use core::{
     editor::Editor,
     error::Error,
-    filer_unix::Fs,
-    input_unix::StdinRaw,
-    output_unix::Stdout,
     traits::{Filer, Input, Output},
+    unix::{filer::Fs, input::StdinRaw, output::Stdout},
 };
 use std::env;
 
