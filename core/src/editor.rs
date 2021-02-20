@@ -25,6 +25,7 @@ pub enum Key {
 }
 
 pub enum Command {
+    Find,
     Save,
     Exit,
 }
@@ -93,7 +94,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 row_offset: 0,
                 col_offset: 0,
                 document: Document::new(),
-                message: Some(Message::new("HELP: Ctrl-S = save | Ctrl-Q = quit")),
+                message: Some(Message::new(
+                    "HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find",
+                )),
                 confirm: false,
             })
         } else {
@@ -109,13 +112,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     pub fn save(&mut self) {
         if self.document.filename.is_none() {
-            let filename = match self.prompt() {
-                Ok(text) => text,
-                Err(_) => {
-                    self.message = Some(Message::new("Error writing file!"));
-                    return;
-                }
-            };
+            let filename = self.prompt("Save as");
             if filename.is_none() {
                 self.message = Some(Message::new("Save aborted"));
                 return;
@@ -233,6 +230,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 self.move_cursor(&k);
             }
             Key::Command(command) => match command {
+                Command::Find => {
+                    self.find();
+                }
                 Command::Save => {
                     self.save();
                 }
@@ -296,18 +296,32 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    fn prompt(&mut self) -> Result<Option<String>, Error> {
+    fn find(&mut self) {
+        let query = match self.prompt("Search") {
+            Some(t) => t,
+            None => return,
+        };
+        if let Some(pos) = self.document.find(&query) {
+            self.cursor = pos;
+        } else {
+            self.message = Some(Message::new(format!("Not found: {}", query)));
+        }
+    }
+
+    fn prompt(&mut self, description: &str) -> Option<String> {
         let mut message = String::new();
         loop {
             self.message = Some(Message::new(format!(
-                "Save as: {} (ESC to cancel)",
-                message
+                "{}: {} (ESC to cancel)",
+                description, message
             )));
-            self.refresh_screen()?;
+            if self.refresh_screen().is_err() {
+                return None;
+            }
             match self.input.wait_for_key() {
                 Key::Escape => {
                     self.message = None;
-                    return Ok(None);
+                    return None;
                 }
                 Key::Del | Key::Backspace => {
                     message.pop();
@@ -315,7 +329,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 Key::Enter => {
                     if message.len() != 0 {
                         self.message = None;
-                        return Ok(Some(message));
+                        return Some(message);
                     }
                 }
                 Key::Char(c) => {
