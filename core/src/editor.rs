@@ -13,16 +13,20 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub enum Key {
     Escape,
-    Exit,
-    Save,
     Backspace,
     Del,
     Enter,
     Home,
     End,
+    Command(Command),
     Page(Page),
     Arrow(Arrow),
     Char(char),
+}
+
+pub enum Command {
+    Save,
+    Exit,
 }
 
 pub enum Page {
@@ -228,20 +232,22 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             Key::Arrow(k) => {
                 self.move_cursor(&k);
             }
-            Key::Save => {
-                self.save();
-            }
-            Key::Exit => {
-                if self.document.is_dirty() && self.confirm == false {
-                    self.confirm = true;
-                    self.message = Some(Message::new(
-                        "WARNING!!! File has unsaved changes. Press Ctrl-Q 1 more times to quit.",
-                    ));
-                    return Ok(false);
-                } else {
-                    return Ok(true);
+            Key::Command(command) => match command {
+                Command::Save => {
+                    self.save();
                 }
-            }
+                Command::Exit => {
+                    if self.document.is_dirty() && self.confirm == false {
+                        self.confirm = true;
+                        self.message = Some(Message::new(
+                            "WARNING!!! File has unsaved changes. Press Ctrl-Q 1 more times to quit.",
+                        ));
+                        return Ok(false);
+                    } else {
+                        return Ok(true);
+                    }
+                }
+            },
             Key::Char(c) => {
                 self.document.insert(c, &self.cursor);
                 self.move_cursor(&Arrow::Right);

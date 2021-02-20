@@ -1,4 +1,4 @@
-use core::{ansi_escape::*, Arrow, Error, Input, Key, Page};
+use core::{ansi_escape::*, Arrow, Command, Error, Input, Key, Page};
 use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,
@@ -136,8 +136,8 @@ impl Input for StdinRaw {
             b'\r' | b'\n' => Key::Enter,
             BACKSPACE | DELETE_BIS => Key::Backspace,
             REFRESH_SCREEN => Key::Escape,
-            SAVE => Key::Save,
-            EXIT => Key::Exit,
+            SAVE => Key::Command(Command::Save),
+            EXIT => Key::Command(Command::Exit),
             _ => Key::Char(b as char),
         }
     }
