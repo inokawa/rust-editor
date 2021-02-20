@@ -16,6 +16,32 @@ const DELETE_BIS: u8 = ctrl('h');
 const REFRESH_SCREEN: u8 = ctrl('l');
 const BACKSPACE: u8 = 127;
 
+#[cfg(target_os = "linux")]
+fn init_term() -> termios {
+    termios {
+        c_iflag: 0,
+        c_oflag: 0,
+        c_cflag: 0,
+        c_lflag: 0,
+        c_line: 0,
+        c_cc: [0u8; 32],
+        c_ispeed: 0,
+        c_ospeed: 0,
+    }
+}
+#[cfg(target_os = "macos")]
+fn init_term() -> termios {
+    termios {
+        c_iflag: 0,
+        c_oflag: 0,
+        c_cflag: 0,
+        c_lflag: 0,
+        c_cc: [0u8; 20],
+        c_ispeed: 0,
+        c_ospeed: 0,
+    }
+}
+
 #[cfg(unix)]
 pub struct StdinRaw {
     orig: termios,
@@ -33,15 +59,7 @@ impl StdinRaw {
 
 impl Input for StdinRaw {
     fn new() -> Result<Self, Error> {
-        let mut term = termios {
-            c_iflag: 0,
-            c_oflag: 0,
-            c_cflag: 0,
-            c_lflag: 0,
-            c_cc: [0u8; 20],
-            c_ispeed: 0,
-            c_ospeed: 0,
-        };
+        let mut term = init_term();
         unsafe { tcgetattr(STDIN_FILENO, &mut term) };
 
         let orig = term;
