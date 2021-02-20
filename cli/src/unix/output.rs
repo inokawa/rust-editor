@@ -1,4 +1,4 @@
-use super::{ansi_escape::*, editor::Position, error::Error, traits::Output};
+use core::{ansi_escape::*, Error, Output, Position};
 use libc::*;
 use std::{
     io::{self, Write},

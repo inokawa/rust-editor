@@ -1,4 +1,5 @@
-use core::{Editor, Error, Filer, Fs, Input, Output, StdinRaw, Stdout};
+use cli::{Fs, StdinRaw, Stdout};
+use core::{Editor, Error, Filer, Input, Output};
 use std::env;
 
 fn main() -> Result<(), Error> {

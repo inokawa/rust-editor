@@ -1,4 +1,4 @@
-use super::{error::Error, traits::Filer};
+use core::{Error, Filer};
 use std::{fs, io::Write};
 
 pub struct Fs {}

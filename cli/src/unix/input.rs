@@ -1,9 +1,4 @@
-use super::{
-    ansi_escape::*,
-    editor::{Arrow, Key, Page},
-    error::Error,
-    traits::Input,
-};
+use core::{ansi_escape::*, Arrow, Error, Input, Key, Page};
 use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,
