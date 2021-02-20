@@ -1,5 +1,7 @@
 # rust-editor
 
+![deploy](https://github.com/inokawa/rust-editor/workflows/check/badge.svg)
+
 WIP
 
 An implementation of text editor with Rust.
