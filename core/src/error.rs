@@ -2,8 +2,8 @@ use std::io;
 
 #[derive(Debug)]
 pub enum Error {
-    Init,
     IO(io::Error),
+    UnknownWindowSize,
 }
 
 impl From<io::Error> for Error {

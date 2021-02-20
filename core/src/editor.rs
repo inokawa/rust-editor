@@ -93,7 +93,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 ))),
             })
         } else {
-            Err(Error::Init)
+            Err(Error::UnknownWindowSize)
         }
     }
 
