@@ -100,13 +100,13 @@ pub struct Row {
 impl Row {
     pub fn new() -> Self {
         Row {
-            string: String::from(""),
+            string: String::new(),
         }
     }
 
     pub fn render(&self, start: usize, end: usize) -> String {
         if start > end {
-            return String::from("");
+            return String::new();
         }
         let start = cmp::max(0, start);
         let end = cmp::min(self.string.len(), end);
@@ -123,7 +123,7 @@ impl Row {
                     })
                     .collect()
             })
-            .unwrap_or(String::from(""))
+            .unwrap_or(String::new())
     }
 
     pub fn get_width(&self, start: usize, end: usize) -> usize {
