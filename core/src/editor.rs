@@ -53,9 +53,9 @@ struct Message {
 }
 
 impl Message {
-    fn new(text: String) -> Self {
+    fn new(text: impl Into<String>) -> Message {
         Message {
-            text,
+            text: text.into(),
             time: Instant::now(),
         }
     }
@@ -88,9 +88,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 row_offset: 0,
                 col_offset: 0,
                 document: Document::new(),
-                message: Some(Message::new(String::from(
-                    "HELP: Ctrl-S = save | Ctrl-Q = quit",
-                ))),
+                message: Some(Message::new("HELP: Ctrl-S = save | Ctrl-Q = quit")),
             })
         } else {
             Err(Error::UnknownWindowSize)
@@ -110,10 +108,10 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         let filename = self.document.filename.clone().unwrap();
         match self.filer.save(&filename, self.document.contents()) {
             Ok(_) => {
-                self.message = Some(Message::new("File saved successfully.".to_string()));
+                self.message = Some(Message::new("File saved successfully."));
             }
             _ => {
-                self.message = Some(Message::new("Error writing file!".to_string()));
+                self.message = Some(Message::new("Error writing file!"));
             }
         }
     }
