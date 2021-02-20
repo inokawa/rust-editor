@@ -51,6 +51,10 @@ impl Document {
         self.dirty > 0
     }
 
+    pub fn reset_dirty(&mut self) {
+        self.dirty = 0;
+    }
+
     pub fn insert_newline(&mut self, at: &Position) {
         if at.y > self.len() {
             return;

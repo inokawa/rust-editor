@@ -105,14 +105,26 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     pub fn save(&mut self) {
         if self.document.filename.is_none() {
-            self.document.filename = Some(String::from("TODO"));
+            let filename = match self.prompt() {
+                Ok(text) => text,
+                Err(_) => {
+                    self.message = Some(Message::new("Error writing file!"));
+                    return;
+                }
+            };
+            if filename.is_none() {
+                self.message = Some(Message::new("Save aborted"));
+                return;
+            }
+            self.document.filename = filename;
         }
         let filename = self.document.filename.clone().unwrap();
         match self.filer.save(&filename, self.document.contents()) {
             Ok(_) => {
+                self.document.reset_dirty();
                 self.message = Some(Message::new("File saved successfully."));
             }
-            _ => {
+            Err(_) => {
                 self.message = Some(Message::new("Error writing file!"));
             }
         }
@@ -274,6 +286,36 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         if let Some(r) = self.document.row(self.cursor.y) {
             if self.cursor.x > r.len() {
                 self.cursor.x = r.len();
+            }
+        }
+    }
+
+    fn prompt(&mut self) -> Result<Option<String>, Error> {
+        let mut message = String::new();
+        loop {
+            self.message = Some(Message::new(format!(
+                "Save as: {} (ESC to cancel)",
+                message
+            )));
+            self.refresh_screen()?;
+            match self.input.wait_for_key() {
+                Key::Escape => {
+                    self.message = None;
+                    return Ok(None);
+                }
+                Key::Del | Key::Backspace => {
+                    message.pop();
+                }
+                Key::Enter => {
+                    if message.len() != 0 {
+                        self.message = None;
+                        return Ok(Some(message));
+                    }
+                }
+                Key::Char(c) => {
+                    message.push(c);
+                }
+                _ => {}
             }
         }
     }
