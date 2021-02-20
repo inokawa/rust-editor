@@ -14,7 +14,7 @@ impl Document {
     pub fn new() -> Self {
         Document {
             filename: None,
-            rows: vec![],
+            rows: Vec::new(),
         }
     }
 
