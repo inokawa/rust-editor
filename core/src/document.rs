@@ -8,6 +8,7 @@ const TAB_STOP: usize = 4;
 pub struct Document {
     pub filename: Option<String>,
     rows: Vec<Row>,
+    dirty: usize,
 }
 
 impl Document {
@@ -15,6 +16,7 @@ impl Document {
         Document {
             filename: None,
             rows: Vec::new(),
+            dirty: 0,
         }
     }
 
@@ -29,6 +31,7 @@ impl Document {
         Document {
             filename: Some(filename),
             rows,
+            dirty: 0,
         }
     }
 
@@ -44,6 +47,10 @@ impl Document {
         self.rows.len()
     }
 
+    pub fn is_dirty(&self) -> bool {
+        self.dirty > 0
+    }
+
     pub fn insert_newline(&mut self, at: &Position) {
         if at.y > self.len() {
             return;
@@ -56,6 +63,7 @@ impl Document {
             let new_row = row.split(at.x);
             self.rows.insert(at.y + 1, new_row);
         }
+        self.dirty += 1;
     }
 
     pub fn insert(&mut self, c: char, at: &Position) {
@@ -68,6 +76,7 @@ impl Document {
                 row.insert(c, at.x);
             }
         }
+        self.dirty += 1;
     }
 
     pub fn delete(&mut self, at: &Position) {
@@ -90,6 +99,7 @@ impl Document {
                 row.delete(at.x);
             }
         }
+        self.dirty += 1;
     }
 }
 

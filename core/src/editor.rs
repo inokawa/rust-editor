@@ -295,12 +295,24 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     fn draw_status_bar(&self, buf: &mut String) {
         buf.push_str(REVERSE_VIDEO);
-        let mut filename = match &self.document.filename {
-            Some(n) => n.clone(),
-            None => String::from("[No Name]"),
-        };
-        filename.truncate(20);
-        let left = format!("{} - {} lines", filename, self.document.len());
+        let left = format!(
+            "{} - {} lines {}",
+            &self
+                .document
+                .filename
+                .clone()
+                .map(|mut n| {
+                    n.truncate(20);
+                    n
+                })
+                .unwrap_or(String::from("[No Name]")),
+            self.document.len(),
+            if self.document.is_dirty() {
+                "(modified)"
+            } else {
+                ""
+            }
+        );
         let right = format!("{}/{}", self.cursor.y, self.document.len());
         let rlen = right.len();
         let mut len = cmp::min(left.len(), self.screen.cols);
