@@ -71,6 +71,7 @@ pub struct Editor<I: Input, O: Output, F: Filer> {
     col_offset: usize,
     document: Document,
     message: Option<Message>,
+    confirm: bool,
 }
 
 impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
@@ -89,6 +90,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 col_offset: 0,
                 document: Document::new(),
                 message: Some(Message::new("HELP: Ctrl-S = save | Ctrl-Q = quit")),
+                confirm: false,
             })
         } else {
             Err(Error::UnknownWindowSize)
@@ -217,7 +219,17 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             Key::Save => {
                 self.save();
             }
-            Key::Exit => return Ok(true),
+            Key::Exit => {
+                if self.document.is_dirty() && self.confirm == false {
+                    self.confirm = true;
+                    self.message = Some(Message::new(
+                        "WARNING!!! File has unsaved changes. Press Ctrl-Q 1 more times to quit.",
+                    ));
+                    return Ok(false);
+                } else {
+                    return Ok(true);
+                }
+            }
             Key::Char(c) => {
                 self.document.insert(c, &self.cursor);
                 self.move_cursor(&Arrow::Right);
@@ -225,6 +237,10 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             _ => {}
         }
 
+        if self.confirm == true {
+            self.confirm = false;
+            self.message = None;
+        }
         Ok(false)
     }
 
