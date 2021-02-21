@@ -3,7 +3,7 @@ use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-const MAX_UNDO_LENGTH: usize = 100;
+const MAX_UNDO_LENGTH: usize = 1000;
 const TAB_STOP: usize = 4;
 
 #[derive(Clone)]
@@ -148,18 +148,20 @@ impl Document {
             return;
         }
         match self.histories.get(index - 1) {
-            Some(Action::Insert { pos, c }) => {
-                if let Some(row) = self.rows.get_mut(pos.y) {
-                    if let Some(_) = row.delete(pos.x) {
-                        self.history_index += 1;
+            Some(action) => {
+                match action {
+                    Action::Insert { pos, c } => {
+                        if let Some(row) = self.rows.get_mut(pos.y) {
+                            if let Some(_) = row.delete(pos.x) {}
+                        }
+                    }
+                    Action::Delete { pos, c } => {
+                        if let Some(row) = self.rows.get_mut(pos.y) {
+                            row.insert(c.clone(), pos.x);
+                        }
                     }
                 }
-            }
-            Some(Action::Delete { pos, c }) => {
-                if let Some(row) = self.rows.get_mut(pos.y) {
-                    row.insert(c.clone(), pos.x);
-                    self.history_index += 1;
-                }
+                self.history_index += 1;
             }
             _ => {}
         }
@@ -171,18 +173,20 @@ impl Document {
             return;
         }
         match self.histories.get(index) {
-            Some(Action::Insert { pos, c }) => {
-                if let Some(row) = self.rows.get_mut(pos.y) {
-                    row.insert(c.clone(), pos.x);
-                    self.history_index -= 1;
-                }
-            }
-            Some(Action::Delete { pos, c }) => {
-                if let Some(row) = self.rows.get_mut(pos.y) {
-                    if let Some(_) = row.delete(pos.x) {
-                        self.history_index -= 1;
+            Some(action) => {
+                match action {
+                    Action::Insert { pos, c } => {
+                        if let Some(row) = self.rows.get_mut(pos.y) {
+                            row.insert(c.clone(), pos.x);
+                        }
+                    }
+                    Action::Delete { pos, c } => {
+                        if let Some(row) = self.rows.get_mut(pos.y) {
+                            if let Some(_) = row.delete(pos.x) {}
+                        }
                     }
                 }
+                self.history_index -= 1;
             }
             _ => {}
         }
