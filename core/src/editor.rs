@@ -261,7 +261,6 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 self.document.insert(c, &self.cursor);
                 self.move_cursor(&Arrow::Right);
             }
-            _ => {}
         }
 
         if self.confirm == true {
