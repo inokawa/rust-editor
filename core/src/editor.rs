@@ -69,6 +69,11 @@ impl Message {
     }
 }
 
+pub enum SearchDirection {
+    Forward,
+    Backward,
+}
+
 pub struct Editor<I: Input, O: Output, F: Filer> {
     input: I,
     output: O,
@@ -115,7 +120,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     pub fn save(&mut self) {
         if self.document.filename.is_none() {
-            let filename = self.prompt("Save as", |_, _, _| {});
+            let filename = self.prompt("Save as", "ESC to cancel", |_, _, _| {});
             if filename.is_none() {
                 self.message = Some(Message::new("Save aborted"));
                 return;
@@ -307,22 +312,39 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     fn find(&mut self) {
         let cursor = self.cursor.clone();
-        match self.prompt("Search", |editor, key, query| match key {
-            Key::Enter | Key::Escape => {}
-            _ => {
-                if let Some(pos) = editor.document.find(&query) {
-                    editor.cursor = pos;
-                    editor.scroll();
+        let mut direction = SearchDirection::Forward;
+        match self.prompt("Search", "Use ESC/Arrows/Enter", |editor, key, query| {
+            let mut moved = false;
+            match key {
+                Key::Enter | Key::Escape => {
+                    return;
+                }
+                Key::Arrow(Arrow::Left) | Key::Arrow(Arrow::Up) => {
+                    direction = SearchDirection::Backward;
+                    editor.move_cursor(&Arrow::Left);
+                    moved = true;
+                }
+                Key::Arrow(Arrow::Right) | Key::Arrow(Arrow::Down) => {
+                    direction = SearchDirection::Forward;
+                    editor.move_cursor(&Arrow::Right);
+                    moved = true;
+                }
+                _ => {
+                    direction = SearchDirection::Forward;
+                }
+            }
+
+            if let Some(pos) = editor.document.find(&query, &editor.cursor, &direction) {
+                editor.cursor = pos;
+                editor.scroll();
+            } else if moved == true {
+                match direction {
+                    SearchDirection::Forward => editor.move_cursor(&Arrow::Left),
+                    SearchDirection::Backward => editor.move_cursor(&Arrow::Right),
                 }
             }
         }) {
-            Some(query) => {
-                if let Some(pos) = self.document.find(&query) {
-                    self.cursor = pos;
-                } else {
-                    self.message = Some(Message::new(format!("Not found: {}", query)));
-                }
-            }
+            Some(query) => {}
             None => {
                 self.cursor = cursor;
                 self.scroll();
@@ -330,16 +352,13 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         };
     }
 
-    fn prompt<C>(&mut self, description: &str, cb: C) -> Option<String>
+    fn prompt<C>(&mut self, desc1: &str, desc2: &str, mut cb: C) -> Option<String>
     where
-        C: Fn(&mut Self, Key, &String),
+        C: FnMut(&mut Self, Key, &String),
     {
         let mut message = String::new();
         loop {
-            self.message = Some(Message::new(format!(
-                "{}: {} (ESC to cancel)",
-                description, message
-            )));
+            self.message = Some(Message::new(format!("{}: {} ({})", desc1, message, desc2)));
             if self.refresh_screen().is_err() {
                 return None;
             }
