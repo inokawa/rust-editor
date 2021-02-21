@@ -8,7 +8,19 @@ An implementation of text editor with Rust.
 
 This is a hobby project just for my study, but I'm trying to make it as much as practical.
 
-This editor is roughly based on [kilo](https://github.com/antirez/kilo) and following the tutorial:
+This editor is roughly based on [kilo](https://github.com/antirez/kilo), but has some improvements.
+
+## Start
+
+```sh
+git clone git@github.com:inokawa/rust-editor.git
+cd rust-editor
+cargo run "path/to/file.txt"
+```
+
+## References
+
+Thank you for this great tutorial of kilo:
 
 - https://viewsourcecode.org/snaptoken/kilo/
 
@@ -18,11 +30,3 @@ And thank you for other great implementations of kilo:
 - https://github.com/ilai-deutel/kibi
 - https://www.philippflenker.com/hecto/
 - https://github.com/nkon/ked-texteditor
-
-## Start
-
-```sh
-git clone git@github.com:inokawa/rust-editor.git
-cd rust-editor
-cargo run "path/to/file.txt"
-```
