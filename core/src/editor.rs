@@ -306,18 +306,27 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     fn find(&mut self) {
+        let cursor = self.cursor.clone();
         match self.prompt("Search", |editor, key, query| match key {
             Key::Enter | Key::Escape => {}
             _ => {
                 if let Some(pos) = editor.document.find(&query) {
                     editor.cursor = pos;
-                } else {
-                    editor.message = Some(Message::new(format!("Not found: {}", query)));
+                    editor.scroll();
                 }
             }
         }) {
-            Some(t) => t,
-            None => return,
+            Some(query) => {
+                if let Some(pos) = self.document.find(&query) {
+                    self.cursor = pos;
+                } else {
+                    self.message = Some(Message::new(format!("Not found: {}", query)));
+                }
+            }
+            None => {
+                self.cursor = cursor;
+                self.scroll();
+            }
         };
     }
 
