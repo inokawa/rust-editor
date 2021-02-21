@@ -139,7 +139,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             self.refresh_screen()?;
             let quit = self.process_key_press()?;
             if quit == true {
-                self.output.clear_screen()?;
+                self.output.clear_screen();
                 break;
             }
         }
@@ -150,13 +150,13 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         self.scroll();
 
         let mut buf = String::new();
-        buf.push_str(HIDE_CURSOR);
+        self.output.hide_cursor();
         buf.push_str(MOVE_CURSOR_TO_START);
 
         self.draw_rows(&mut buf);
         self.draw_status_bar(&mut buf);
         self.draw_message_bar(&mut buf);
-        self.output.render(buf)?;
+        self.output.render(&buf);
 
         let x = self
             .document
@@ -166,8 +166,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         self.output.move_cursor(Position {
             x: (x + 1),
             y: (self.cursor.y - self.row_offset) + 1,
-        })?;
-        self.output.render(SHOW_CURSOR.to_string())?;
+        });
+        self.output.show_cursor();
+        self.output.flush()?;
 
         Ok(())
     }

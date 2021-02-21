@@ -12,9 +12,12 @@ pub trait Input {
 
 pub trait Output {
     fn new() -> Self;
-    fn clear_screen(&self) -> Result<(), Error>;
-    fn move_cursor(&self, pos: Position) -> Result<(), Error>;
-    fn render(&self, text: String) -> Result<(), Error>;
+    fn move_cursor(&self, pos: Position) -> ();
+    fn clear_screen(&self) -> ();
+    fn render(&self, text: &str) -> ();
+    fn flush(&self) -> Result<(), Error>;
+    fn hide_cursor(&self) -> ();
+    fn show_cursor(&self) -> ();
     fn get_window_size(&self) -> Option<(usize, usize)>;
 }
 
