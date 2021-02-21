@@ -26,6 +26,8 @@ pub enum Key {
 
 pub enum Command {
     Find,
+    Undo,
+    Redo,
     Save,
     Exit,
 }
@@ -47,6 +49,7 @@ struct Screen {
     cols: usize,
 }
 
+#[derive(Clone)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
@@ -232,6 +235,12 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             Key::Command(command) => match command {
                 Command::Find => {
                     self.find();
+                }
+                Command::Undo => {
+                    self.document.undo();
+                }
+                Command::Redo => {
+                    self.document.redo();
                 }
                 Command::Save => {
                     self.save();

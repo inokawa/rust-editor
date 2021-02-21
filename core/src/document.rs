@@ -3,12 +3,21 @@ use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
+const MAX_UNDO_LENGTH: usize = 100;
 const TAB_STOP: usize = 4;
+
+#[derive(Clone)]
+enum Action {
+    Insert { pos: Position, c: char },
+    Delete { pos: Position, c: char },
+}
 
 pub struct Document {
     pub filename: Option<String>,
     rows: Vec<Row>,
     dirty: usize,
+    history_index: usize,
+    histories: Vec<Action>,
 }
 
 impl Document {
@@ -17,6 +26,8 @@ impl Document {
             filename: None,
             rows: Vec::new(),
             dirty: 0,
+            history_index: 0,
+            histories: Vec::new(),
         }
     }
 
@@ -32,6 +43,8 @@ impl Document {
             filename: Some(filename),
             rows,
             dirty: 0,
+            history_index: 0,
+            histories: Vec::new(),
         }
     }
 
@@ -55,6 +68,20 @@ impl Document {
         self.dirty = 0;
     }
 
+    fn edit(&mut self) {
+        self.dirty += 1;
+        self.histories = self.histories[..(self.histories.len() - self.history_index)].to_vec();
+        self.history_index = 0;
+    }
+
+    fn push_history(&mut self, action: Action) {
+        self.histories.push(action);
+        let len = self.histories.len();
+        if len > MAX_UNDO_LENGTH {
+            self.histories = self.histories[len - MAX_UNDO_LENGTH..].to_vec();
+        }
+    }
+
     pub fn insert_newline(&mut self, at: &Position) {
         if at.y > self.len() {
             return;
@@ -67,7 +94,7 @@ impl Document {
             let new_row = row.split(at.x);
             self.rows.insert(at.y + 1, new_row);
         }
-        self.dirty += 1;
+        self.edit();
     }
 
     pub fn insert(&mut self, c: char, at: &Position) {
@@ -80,7 +107,11 @@ impl Document {
                 row.insert(c, at.x);
             }
         }
-        self.dirty += 1;
+        self.edit();
+        self.push_history(Action::Insert {
+            pos: Position { x: at.x, y: at.y },
+            c,
+        });
     }
 
     pub fn delete(&mut self, at: &Position) {
@@ -100,10 +131,61 @@ impl Document {
             }
         } else {
             if let Some(row) = self.rows.get_mut(at.y) {
-                row.delete(at.x);
+                if let Some(deleted) = row.delete(at.x) {
+                    self.push_history(Action::Delete {
+                        pos: Position { x: at.x, y: at.y },
+                        c: deleted,
+                    });
+                }
             }
         }
-        self.dirty += 1;
+        self.edit();
+    }
+
+    pub fn undo(&mut self) {
+        let index = self.histories.len() - self.history_index;
+        if index == 0 {
+            return;
+        }
+        match self.histories.get(index - 1) {
+            Some(Action::Insert { pos, c }) => {
+                if let Some(row) = self.rows.get_mut(pos.y) {
+                    if let Some(_) = row.delete(pos.x) {
+                        self.history_index += 1;
+                    }
+                }
+            }
+            Some(Action::Delete { pos, c }) => {
+                if let Some(row) = self.rows.get_mut(pos.y) {
+                    row.insert(c.clone(), pos.x);
+                    self.history_index += 1;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn redo(&mut self) {
+        let index = self.histories.len() - self.history_index;
+        if index == self.histories.len() {
+            return;
+        }
+        match self.histories.get(index) {
+            Some(Action::Insert { pos, c }) => {
+                if let Some(row) = self.rows.get_mut(pos.y) {
+                    row.insert(c.clone(), pos.x);
+                    self.history_index -= 1;
+                }
+            }
+            Some(Action::Delete { pos, c }) => {
+                if let Some(row) = self.rows.get_mut(pos.y) {
+                    if let Some(_) = row.delete(pos.x) {
+                        self.history_index -= 1;
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 
     pub fn find(&self, query: &str) -> Option<Position> {
@@ -182,22 +264,20 @@ impl Row {
             let mut first: String = self.string.graphemes(true).take(at).collect();
             let rest: String = self.string.graphemes(true).skip(at).collect();
             first.push(c);
-            first.push_str(&rest);
-            self.string = first;
+            self.string = first + &rest;
         }
     }
 
-    fn delete(&mut self, at: usize) {
+    fn delete(&mut self, at: usize) -> Option<char> {
         if at >= self.len() {
-            return;
+            return None;
         }
-        self.string = self
-            .string
-            .graphemes(true)
-            .enumerate()
-            .filter(|(i, _)| i != &at)
-            .map(|(_, c)| c)
-            .collect();
+        let first: String = self.string.graphemes(true).take(at).collect();
+        let mut rest = self.string.graphemes(true).skip(at);
+        let deleted = rest.next().and_then(|s| s.chars().nth(0));
+        let rest: String = rest.collect();
+        self.string = first + &rest;
+        deleted
     }
 
     fn append(&mut self, new: &Self) {

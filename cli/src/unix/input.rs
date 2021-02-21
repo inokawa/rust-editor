@@ -13,6 +13,8 @@ const ESCAPE: u8 = b'\x1b';
 const FIND: u8 = ctrl('f');
 const EXIT: u8 = ctrl('q');
 const SAVE: u8 = ctrl('s');
+const UNDO: u8 = ctrl('z');
+const REDO: u8 = ctrl('y');
 const DELETE_BIS: u8 = ctrl('h');
 const REFRESH_SCREEN: u8 = ctrl('l');
 const BACKSPACE: u8 = 127;
@@ -138,6 +140,8 @@ impl Input for StdinRaw {
             BACKSPACE | DELETE_BIS => Key::Backspace,
             REFRESH_SCREEN => Key::Escape,
             FIND => Key::Command(Command::Find),
+            UNDO => Key::Command(Command::Undo),
+            REDO => Key::Command(Command::Redo),
             SAVE => Key::Command(Command::Save),
             EXIT => Key::Command(Command::Exit),
             _ => Key::Char(b as char),
