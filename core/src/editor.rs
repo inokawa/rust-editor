@@ -115,7 +115,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     pub fn save(&mut self) {
         if self.document.filename.is_none() {
-            let filename = self.prompt("Save as");
+            let filename = self.prompt("Save as", |_, _, _| {});
             if filename.is_none() {
                 self.message = Some(Message::new("Save aborted"));
                 return;
@@ -306,18 +306,25 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     fn find(&mut self) {
-        let query = match self.prompt("Search") {
+        match self.prompt("Search", |editor, key, query| match key {
+            Key::Enter | Key::Escape => {}
+            _ => {
+                if let Some(pos) = editor.document.find(&query) {
+                    editor.cursor = pos;
+                } else {
+                    editor.message = Some(Message::new(format!("Not found: {}", query)));
+                }
+            }
+        }) {
             Some(t) => t,
             None => return,
         };
-        if let Some(pos) = self.document.find(&query) {
-            self.cursor = pos;
-        } else {
-            self.message = Some(Message::new(format!("Not found: {}", query)));
-        }
     }
 
-    fn prompt(&mut self, description: &str) -> Option<String> {
+    fn prompt<C>(&mut self, description: &str, cb: C) -> Option<String>
+    where
+        C: Fn(&mut Self, Key, &String),
+    {
         let mut message = String::new();
         loop {
             self.message = Some(Message::new(format!(
@@ -327,7 +334,8 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             if self.refresh_screen().is_err() {
                 return None;
             }
-            match self.input.wait_for_key() {
+            let key = self.input.wait_for_key();
+            match key {
                 Key::Escape => {
                     self.message = None;
                     return None;
@@ -346,6 +354,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 }
                 _ => {}
             }
+            cb(self, key, &message);
         }
     }
 
