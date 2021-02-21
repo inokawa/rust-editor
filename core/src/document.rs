@@ -10,6 +10,10 @@ const TAB_STOP: usize = 4;
 enum Action {
     Insert { pos: Position, c: char },
     Delete { pos: Position, c: char },
+    InsertRow { y: usize, row: Row },
+    DeleteRow { y: usize, row: Row },
+    // TODO handle split by enter
+    // TODO keep cursor position
 }
 
 pub struct Document {
@@ -86,15 +90,21 @@ impl Document {
         if at.y > self.len() {
             return;
         }
+        let r;
         if at.y == self.len() || at.y + 1 == self.len() {
-            self.rows.push(Row::new());
+            r = Row::new();
+            self.rows.push(r.clone());
+        } else if let Some(row) = self.rows.get_mut(at.y) {
+            r = row.split(at.x);
+            self.rows.insert(at.y + 1, r.clone());
+        } else {
             return;
         }
-        if let Some(row) = self.rows.get_mut(at.y) {
-            let new_row = row.split(at.x);
-            self.rows.insert(at.y + 1, new_row);
-        }
         self.edit();
+        self.push_history(Action::InsertRow {
+            y: at.y + 1,
+            row: r,
+        });
     }
 
     pub fn insert(&mut self, c: char, at: &Position) {
@@ -128,6 +138,10 @@ impl Document {
             let next_row = self.rows.remove(at.y + 1);
             if let Some(row) = self.rows.get_mut(at.y) {
                 row.append(&next_row);
+                self.push_history(Action::DeleteRow {
+                    y: at.y + 1,
+                    row: next_row,
+                });
             }
         } else {
             if let Some(row) = self.rows.get_mut(at.y) {
@@ -160,6 +174,12 @@ impl Document {
                             row.insert(c.clone(), pos.x);
                         }
                     }
+                    Action::InsertRow { y, row } => {
+                        self.rows.remove(y.clone());
+                    }
+                    Action::DeleteRow { y, row } => {
+                        self.rows.insert(y.clone(), row.clone());
+                    }
                 }
                 self.history_index += 1;
             }
@@ -185,6 +205,12 @@ impl Document {
                             if let Some(_) = row.delete(pos.x) {}
                         }
                     }
+                    Action::InsertRow { y, row } => {
+                        self.rows.insert(y.clone(), row.clone());
+                    }
+                    Action::DeleteRow { y, row } => {
+                        self.rows.remove(y.clone());
+                    }
                 }
                 self.history_index -= 1;
             }
@@ -202,6 +228,7 @@ impl Document {
     }
 }
 
+#[derive(Clone)]
 pub struct Row {
     string: String,
 }
