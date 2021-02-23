@@ -394,20 +394,16 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         let height = self.screen.rows;
         let rows = self.document.len();
         for y in 0..height {
-            let file_row = y + self.row_offset;
-            if file_row >= rows {
+            let r_index = y + self.row_offset;
+            if r_index >= rows {
                 if rows == 0 && y == height / 3 {
-                    let message = format!("Kilo editor -- version {}", VERSION);
-                    let padding = width.saturating_sub(message.len()) / 2;
-                    let spaces = " ".repeat(padding.saturating_sub(1));
-                    let mut message = format!("~{}{}", spaces, message);
-                    message.truncate(width);
+                    let message = create_welcome_message(width);
                     buf.push_str(&message);
                 } else {
                     buf.push_str("~");
                 }
             } else {
-                if let Some(row) = self.document.row(file_row) {
+                if let Some(row) = self.document.row(r_index) {
                     let chars = &row.render(self.col_offset, self.col_offset + width);
                     buf.push_str(chars);
                 }
@@ -465,4 +461,13 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             }
         }
     }
+}
+
+fn create_welcome_message(width: usize) -> String {
+    let message = format!("Kilo editor -- version {}", VERSION);
+    let padding = width.saturating_sub(message.len()) / 2;
+    let spaces = " ".repeat(padding.saturating_sub(1));
+    let mut message = format!("~{}{}", spaces, message);
+    message.truncate(width);
+    message
 }
