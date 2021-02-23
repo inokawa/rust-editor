@@ -403,7 +403,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    fn draw_rows(&self, buf: &mut String) {
+    fn draw_rows(&mut self, buf: &mut String) {
         let width = self.screen.cols;
         let height = self.screen.rows;
         let rows = self.document.len();
@@ -417,10 +417,11 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                     buf.push_str("~");
                 }
             } else {
-                if let Some(row) = self.document.row(r_index) {
-                    let chars = &row.render(self.col_offset, self.col_offset + width);
-                    buf.push_str(chars);
-                }
+                buf.push_str(&self.document.render_row(
+                    r_index,
+                    self.col_offset,
+                    self.col_offset + width,
+                ));
             }
 
             buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);

@@ -1,4 +1,7 @@
-use super::editor::{Position, SearchDirection};
+use super::{
+    editor::{Position, SearchDirection},
+    tokenizer::{Highlight, Token},
+};
 use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -40,6 +43,7 @@ impl Document {
             .lines()
             .map(|l| Row {
                 string: l.to_string(),
+                highlight: Vec::new(),
             })
             .collect();
 
@@ -58,6 +62,15 @@ impl Document {
 
     pub fn row(&self, y: usize) -> Option<&Row> {
         self.rows.get(y)
+    }
+
+    pub fn render_row(&mut self, y: usize, start: usize, end: usize) -> String {
+        if let Some(row) = self.rows.get_mut(y) {
+            row.update_highlight(start, end);
+            row.render(start, end)
+        } else {
+            String::new()
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -256,12 +269,14 @@ impl Document {
 #[derive(Clone)]
 pub struct Row {
     string: String,
+    highlight: Vec<Token>,
 }
 
 impl Row {
     pub fn new() -> Self {
         Row {
             string: String::new(),
+            highlight: Vec::new(),
         }
     }
 
@@ -273,16 +288,46 @@ impl Row {
         let end = cmp::min(self.string.len(), end);
         self.string
             .get(start..end)
-            .map(|c| {
-                c.chars()
-                    .map(|c| match c {
-                        '\t' => " ".repeat(TAB_STOP),
-                        _ if c.is_ascii_digit() => format!("{}{}{}", "\x1b[31m", c, "\x1b[39m"),
-                        _ => c.to_string(),
+            .map(|s| {
+                s.graphemes(true)
+                    .enumerate()
+                    .map(|(i, c)| match c {
+                        "\t" => " ".repeat(TAB_STOP),
+                        _ => {
+                            if let Some(h) = self.highlight.iter().find(|h| h.index == start + i) {
+                                return match h.highlight {
+                                    Highlight::Number => {
+                                        format!("{}{}{}", "\x1b[31m", c, "\x1b[39m")
+                                    }
+                                    Highlight::None => c.to_string(),
+                                };
+                            }
+                            c.to_string()
+                        }
                     })
                     .collect()
             })
             .unwrap_or(String::new())
+    }
+
+    pub fn update_highlight(&mut self, start: usize, end: usize) {
+        if start > end {
+            return;
+        }
+        let mut highlight = Vec::new();
+        self.string
+            .graphemes(true)
+            .enumerate()
+            .for_each(|(i, s)| match s {
+                "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => {
+                    highlight.push(Token {
+                        index: i,
+                        highlight: Highlight::Number,
+                    })
+                }
+                _ => {}
+            });
+        self.highlight = highlight;
     }
 
     pub fn calc_width(&self, start: usize, end: usize) -> usize {
@@ -353,7 +398,10 @@ impl Row {
         let first = self.string.graphemes(true).take(at).collect();
         let rest = self.string.graphemes(true).skip(at).collect();
         self.string = first;
-        Row { string: rest }
+        Row {
+            string: rest,
+            highlight: Vec::new(),
+        }
     }
 
     fn find(&self, query: &str, at: usize, direction: &SearchDirection) -> Option<usize> {
