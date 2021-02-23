@@ -10,6 +10,9 @@ This is a hobby project just for my study, but I'm trying to make it as much as 
 
 This editor is roughly based on [kilo](https://github.com/antirez/kilo), but has some improvements.
 
+- Support ASCII/UTF-8 encoded texts
+- Support Undo/Redo
+
 ## Start
 
 ```sh
