@@ -91,14 +91,12 @@ impl Document {
             return;
         }
         let r;
-        if at.y == self.len() || at.y + 1 == self.len() {
-            r = Row::new();
-            self.rows.push(r.clone());
-        } else if let Some(row) = self.rows.get_mut(at.y) {
+        if let Some(row) = self.rows.get_mut(at.y) {
             r = row.split(at.x);
             self.rows.insert(at.y + 1, r.clone());
         } else {
-            return;
+            r = Row::new();
+            self.rows.push(r.clone());
         }
         self.edit();
         self.push_history(Action::InsertRow {
