@@ -22,6 +22,7 @@ pub enum Key {
     Page(Page),
     Arrow(Arrow),
     Char(char),
+    CharUtf8(char),
     Unknown,
 }
 
@@ -264,7 +265,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                     }
                 }
             },
-            Key::Char(c) => {
+            Key::Char(c) | Key::CharUtf8(c) => {
                 self.document.insert(c, &self.cursor);
                 self.move_cursor(&Arrow::Right);
             }

@@ -3,7 +3,10 @@ use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,
 };
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    str,
+};
 
 const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
@@ -48,16 +51,6 @@ pub struct StdinRaw {
     orig: termios,
 }
 
-impl StdinRaw {
-    fn read(&self) -> Option<u8> {
-        if let Some(b) = io::stdin().bytes().next() {
-            b.map(|b| Some(b)).unwrap_or(None)
-        } else {
-            None
-        }
-    }
-}
-
 impl Input for StdinRaw {
     fn new() -> Result<Self, Error> {
         let mut term = init_term();
@@ -96,46 +89,7 @@ impl Input for StdinRaw {
         match b {
             // ASCII 0x00~0x7f
             ctrl @ 0x00..=0x1f => match ctrl {
-                0x1b => {
-                    match self.read() {
-                        Some(b'[') => match self.read() {
-                            Some(b'A') => return Key::Arrow(Arrow::Up),
-                            Some(b'B') => return Key::Arrow(Arrow::Down),
-                            Some(b'C') => return Key::Arrow(Arrow::Right),
-                            Some(b'D') => return Key::Arrow(Arrow::Left),
-                            Some(b'H') => return Key::Home,
-                            Some(b'F') => return Key::End,
-                            Some(b'3') => match self.read() {
-                                Some(b'~') => return Key::Del,
-                                _ => {}
-                            },
-                            Some(b'1') | Some(b'7') => match self.read() {
-                                Some(b'~') => return Key::Home,
-                                _ => {}
-                            },
-                            Some(b'4') | Some(b'8') => match self.read() {
-                                Some(b'~') => return Key::End,
-                                _ => {}
-                            },
-                            Some(b'5') => match self.read() {
-                                Some(b'~') => return Key::Page(Page::Up),
-                                _ => {}
-                            },
-                            Some(b'6') => match self.read() {
-                                Some(b'~') => return Key::Page(Page::Down),
-                                _ => {}
-                            },
-                            _ => {}
-                        },
-                        Some(b'O') => match self.read() {
-                            Some(b'H') => return Key::Home,
-                            Some(b'F') => return Key::End,
-                            _ => {}
-                        },
-                        _ => {}
-                    }
-                    Key::Escape
-                }
+                0x1b => self.decode_escape_sequence(),
                 b'\r' | b'\n' => Key::Enter,
                 DELETE => Key::Backspace,
                 REFRESH_SCREEN => Key::Escape,
@@ -150,8 +104,77 @@ impl Input for StdinRaw {
             0x21..=0x7e => Key::Char(b as char),
             0x7f => Key::Backspace,
             // UTF-8 0x80~0xff
-            0x80..=0xff => Key::Char(b as char),
+            0x80..=0xff => self.decode_utf8(b),
         }
+    }
+}
+
+impl StdinRaw {
+    fn read(&self) -> Option<u8> {
+        if let Some(b) = io::stdin().bytes().next() {
+            b.map(|b| Some(b)).unwrap_or(None)
+        } else {
+            None
+        }
+    }
+
+    fn decode_escape_sequence(&self) -> Key {
+        // TODO ignore unhandled escape sequences
+        match self.read() {
+            Some(b'[') => match self.read() {
+                Some(b'A') => return Key::Arrow(Arrow::Up),
+                Some(b'B') => return Key::Arrow(Arrow::Down),
+                Some(b'C') => return Key::Arrow(Arrow::Right),
+                Some(b'D') => return Key::Arrow(Arrow::Left),
+                Some(b'H') => return Key::Home,
+                Some(b'F') => return Key::End,
+                Some(b'3') => match self.read() {
+                    Some(b'~') => return Key::Del,
+                    _ => {}
+                },
+                Some(b'1') | Some(b'7') => match self.read() {
+                    Some(b'~') => return Key::Home,
+                    _ => {}
+                },
+                Some(b'4') | Some(b'8') => match self.read() {
+                    Some(b'~') => return Key::End,
+                    _ => {}
+                },
+                Some(b'5') => match self.read() {
+                    Some(b'~') => return Key::Page(Page::Up),
+                    _ => {}
+                },
+                Some(b'6') => match self.read() {
+                    Some(b'~') => return Key::Page(Page::Down),
+                    _ => {}
+                },
+                _ => {}
+            },
+            Some(b'O') => match self.read() {
+                Some(b'H') => return Key::Home,
+                Some(b'F') => return Key::End,
+                _ => {}
+            },
+            _ => {}
+        }
+        Key::Escape
+    }
+
+    fn decode_utf8(&self, b: u8) -> Key {
+        let mut buf: Vec<u8> = vec![b];
+
+        while buf.len() < 4 {
+            if let Some(b) = self.read() {
+                buf.push(b);
+            }
+            if let Ok(s) = str::from_utf8(&buf) {
+                if let Some(c) = s.chars().next() {
+                    return Key::CharUtf8(c);
+                }
+                return Key::Unknown;
+            }
+        }
+        Key::Unknown
     }
 }
 
