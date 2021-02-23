@@ -279,6 +279,7 @@ impl Row {
                 c.chars()
                     .map(|c| match c {
                         '\t' => " ".repeat(TAB_STOP),
+                        _ if c.is_ascii_digit() => format!("{}{}{}", "\x1b[31m", c, "\x1b[39m"),
                         _ => c.to_string(),
                     })
                     .collect()
