@@ -123,7 +123,7 @@ impl StdinRaw {
         match self.read() {
             Some(b'[') => {
                 match self.read() {
-                    Some(n) => match n {
+                    Some(b) => match b {
                         b'A' => return Key::Arrow(Arrow::Up),
                         b'B' => return Key::Arrow(Arrow::Down),
                         b'C' => return Key::Arrow(Arrow::Right),
