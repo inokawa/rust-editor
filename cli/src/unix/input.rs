@@ -9,15 +9,13 @@ const fn ctrl(c: char) -> u8 {
     (c as u8) & 0b0001_1111
 }
 
-const ESCAPE: u8 = b'\x1b';
 const FIND: u8 = ctrl('f');
 const EXIT: u8 = ctrl('q');
 const SAVE: u8 = ctrl('s');
 const UNDO: u8 = ctrl('z');
 const REDO: u8 = ctrl('y');
-const DELETE_BIS: u8 = ctrl('h');
+const DELETE: u8 = ctrl('h');
 const REFRESH_SCREEN: u8 = ctrl('l');
-const BACKSPACE: u8 = 127;
 
 #[cfg(target_os = "linux")]
 fn init_term() -> termios {
@@ -96,55 +94,63 @@ impl Input for StdinRaw {
             }
         }
         match b {
-            ESCAPE => {
-                match self.read() {
-                    Some(b'[') => match self.read() {
-                        Some(b'A') => return Key::Arrow(Arrow::Up),
-                        Some(b'B') => return Key::Arrow(Arrow::Down),
-                        Some(b'C') => return Key::Arrow(Arrow::Right),
-                        Some(b'D') => return Key::Arrow(Arrow::Left),
-                        Some(b'H') => return Key::Home,
-                        Some(b'F') => return Key::End,
-                        Some(b'3') => match self.read() {
-                            Some(b'~') => return Key::Del,
+            // ASCII 0x00~0x7f
+            ctrl @ 0x00..=0x1f => match ctrl {
+                0x1b => {
+                    match self.read() {
+                        Some(b'[') => match self.read() {
+                            Some(b'A') => return Key::Arrow(Arrow::Up),
+                            Some(b'B') => return Key::Arrow(Arrow::Down),
+                            Some(b'C') => return Key::Arrow(Arrow::Right),
+                            Some(b'D') => return Key::Arrow(Arrow::Left),
+                            Some(b'H') => return Key::Home,
+                            Some(b'F') => return Key::End,
+                            Some(b'3') => match self.read() {
+                                Some(b'~') => return Key::Del,
+                                _ => {}
+                            },
+                            Some(b'1') | Some(b'7') => match self.read() {
+                                Some(b'~') => return Key::Home,
+                                _ => {}
+                            },
+                            Some(b'4') | Some(b'8') => match self.read() {
+                                Some(b'~') => return Key::End,
+                                _ => {}
+                            },
+                            Some(b'5') => match self.read() {
+                                Some(b'~') => return Key::Page(Page::Up),
+                                _ => {}
+                            },
+                            Some(b'6') => match self.read() {
+                                Some(b'~') => return Key::Page(Page::Down),
+                                _ => {}
+                            },
                             _ => {}
                         },
-                        Some(b'1') | Some(b'7') => match self.read() {
-                            Some(b'~') => return Key::Home,
-                            _ => {}
-                        },
-                        Some(b'4') | Some(b'8') => match self.read() {
-                            Some(b'~') => return Key::End,
-                            _ => {}
-                        },
-                        Some(b'5') => match self.read() {
-                            Some(b'~') => return Key::Page(Page::Up),
-                            _ => {}
-                        },
-                        Some(b'6') => match self.read() {
-                            Some(b'~') => return Key::Page(Page::Down),
+                        Some(b'O') => match self.read() {
+                            Some(b'H') => return Key::Home,
+                            Some(b'F') => return Key::End,
                             _ => {}
                         },
                         _ => {}
-                    },
-                    Some(b'O') => match self.read() {
-                        Some(b'H') => return Key::Home,
-                        Some(b'F') => return Key::End,
-                        _ => {}
-                    },
-                    _ => {}
+                    }
+                    Key::Escape
                 }
-                Key::Escape
-            }
-            b'\r' | b'\n' => Key::Enter,
-            BACKSPACE | DELETE_BIS => Key::Backspace,
-            REFRESH_SCREEN => Key::Escape,
-            FIND => Key::Command(Command::Find),
-            UNDO => Key::Command(Command::Undo),
-            REDO => Key::Command(Command::Redo),
-            SAVE => Key::Command(Command::Save),
-            EXIT => Key::Command(Command::Exit),
-            _ => Key::Char(b as char),
+                b'\r' | b'\n' => Key::Enter,
+                DELETE => Key::Backspace,
+                REFRESH_SCREEN => Key::Escape,
+                FIND => Key::Command(Command::Find),
+                UNDO => Key::Command(Command::Undo),
+                REDO => Key::Command(Command::Redo),
+                SAVE => Key::Command(Command::Save),
+                EXIT => Key::Command(Command::Exit),
+                _ => Key::Char(b as char),
+            },
+            0x20 => Key::Char(b as char),
+            0x21..=0x7e => Key::Char(b as char),
+            0x7f => Key::Backspace,
+            // UTF-8 0x80~0xff
+            0x80..=0xff => Key::Char(b as char),
         }
     }
 }
