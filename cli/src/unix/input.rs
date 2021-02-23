@@ -144,7 +144,7 @@ impl Input for StdinRaw {
                 REDO => Key::Command(Command::Redo),
                 SAVE => Key::Command(Command::Save),
                 EXIT => Key::Command(Command::Exit),
-                _ => Key::Char(b as char),
+                _ => Key::Unknown,
             },
             0x20 => Key::Char(b as char),
             0x21..=0x7e => Key::Char(b as char),

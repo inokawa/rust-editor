@@ -22,6 +22,7 @@ pub enum Key {
     Page(Page),
     Arrow(Arrow),
     Char(char),
+    Unknown,
 }
 
 pub enum Command {
@@ -267,6 +268,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 self.document.insert(c, &self.cursor);
                 self.move_cursor(&Arrow::Right);
             }
+            Key::Unknown => {}
         }
 
         if self.confirm == true {
