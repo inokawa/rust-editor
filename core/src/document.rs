@@ -277,12 +277,9 @@ impl Row {
             .get(start..end)
             .map(|c| {
                 c.chars()
-                    .map(|c| {
-                        if c == '\t' {
-                            " ".repeat(TAB_STOP)
-                        } else {
-                            c.to_string()
-                        }
+                    .map(|c| match c {
+                        '\t' => " ".repeat(TAB_STOP),
+                        _ => c.to_string(),
                     })
                     .collect()
             })
@@ -296,22 +293,16 @@ impl Row {
             .graphemes(true)
             .skip(start)
             .take(end - start)
-            .fold(0, |acc, s| {
-                if s == "\t" {
-                    acc + 1 * TAB_STOP
-                } else {
-                    acc + UnicodeWidthStr::width(s)
-                }
+            .fold(0, |acc, s| match s {
+                "\t" => acc + 1 * TAB_STOP,
+                _ => acc + UnicodeWidthStr::width(s),
             })
     }
 
     pub fn len(&self) -> usize {
-        self.string.graphemes(true).fold(0, |acc, c| {
-            if c == "\t" {
-                acc + 1 * TAB_STOP
-            } else {
-                acc + 1
-            }
+        self.string.graphemes(true).fold(0, |acc, s| match s {
+            "\t" => acc + 1 * TAB_STOP,
+            _ => acc + 1,
         })
     }
 
