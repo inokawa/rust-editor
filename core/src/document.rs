@@ -285,17 +285,34 @@ impl Row {
             .unwrap_or(String::new())
     }
 
-    pub fn get_width(&self, start: usize, end: usize) -> usize {
+    pub fn calc_width(&self, start: usize, end: usize) -> usize {
         let start = cmp::max(0, start);
         let end = cmp::min(self.string.graphemes(true).count(), end);
         self.string
             .graphemes(true)
             .skip(start)
             .take(end - start)
-            .fold(0, |acc, s| match s {
-                "\t" => acc + 1 * TAB_STOP,
-                _ => acc + UnicodeWidthStr::width(s),
-            })
+            .fold(0, |acc, s| acc + str_to_width(s))
+    }
+
+    pub fn calc_x(&self, prev_x: usize, prev_row: &Row) -> usize {
+        if prev_x == 0 {
+            return 0;
+        }
+        let target_width = prev_row.calc_width(0, prev_x);
+        let mut x = 0;
+        let mut w = 0;
+        for s in self.string.graphemes(true) {
+            w += str_to_width(s);
+            x += 1;
+            if w >= target_width {
+                if w != target_width {
+                    x -= 1;
+                }
+                break;
+            }
+        }
+        x
     }
 
     pub fn len(&self) -> usize {
@@ -365,5 +382,12 @@ impl Row {
             }
         }
         None
+    }
+}
+
+fn str_to_width(s: &str) -> usize {
+    match s {
+        "\t" => 1 * TAB_STOP,
+        _ => UnicodeWidthStr::width(s),
     }
 }

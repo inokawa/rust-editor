@@ -168,7 +168,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         let x = self
             .document
             .row(self.cursor.y)
-            .map(|row| row.get_width(0, self.cursor.x - self.col_offset))
+            .map(|row| row.calc_width(0, self.cursor.x - self.col_offset))
             .unwrap_or(0);
         self.output.move_cursor(Position {
             x: (x + 1),
@@ -281,8 +281,22 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     fn move_cursor(&mut self, key: &Arrow) {
         match key {
-            Arrow::Up if self.cursor.y > 0 => self.cursor.y -= 1,
-            Arrow::Down if self.cursor.y < self.document.len() => self.cursor.y += 1,
+            Arrow::Up if self.cursor.y > 0 => {
+                if let Some(row) = self.document.row(self.cursor.y) {
+                    if let Some(row_next) = self.document.row(self.cursor.y - 1) {
+                        self.cursor.x = row_next.calc_x(self.cursor.x, row);
+                        self.cursor.y -= 1;
+                    }
+                }
+            }
+            Arrow::Down if self.cursor.y < self.document.len() => {
+                if let Some(row) = self.document.row(self.cursor.y) {
+                    if let Some(row_next) = self.document.row(self.cursor.y + 1) {
+                        self.cursor.x = row_next.calc_x(self.cursor.x, row);
+                        self.cursor.y += 1;
+                    }
+                }
+            }
             Arrow::Left => {
                 if self.cursor.x > 0 {
                     self.cursor.x -= 1
