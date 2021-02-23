@@ -121,35 +121,32 @@ impl StdinRaw {
     fn decode_escape_sequence(&self) -> Key {
         // TODO ignore unhandled escape sequences
         match self.read() {
-            Some(b'[') => match self.read() {
-                Some(b'A') => return Key::Arrow(Arrow::Up),
-                Some(b'B') => return Key::Arrow(Arrow::Down),
-                Some(b'C') => return Key::Arrow(Arrow::Right),
-                Some(b'D') => return Key::Arrow(Arrow::Left),
-                Some(b'H') => return Key::Home,
-                Some(b'F') => return Key::End,
-                Some(b'3') => match self.read() {
-                    Some(b'~') => return Key::Del,
-                    _ => {}
-                },
-                Some(b'1') | Some(b'7') => match self.read() {
-                    Some(b'~') => return Key::Home,
-                    _ => {}
-                },
-                Some(b'4') | Some(b'8') => match self.read() {
-                    Some(b'~') => return Key::End,
-                    _ => {}
-                },
-                Some(b'5') => match self.read() {
-                    Some(b'~') => return Key::Page(Page::Up),
-                    _ => {}
-                },
-                Some(b'6') => match self.read() {
-                    Some(b'~') => return Key::Page(Page::Down),
-                    _ => {}
-                },
-                _ => {}
-            },
+            Some(b'[') => {
+                match self.read() {
+                    Some(n) => match n {
+                        b'A' => return Key::Arrow(Arrow::Up),
+                        b'B' => return Key::Arrow(Arrow::Down),
+                        b'C' => return Key::Arrow(Arrow::Right),
+                        b'D' => return Key::Arrow(Arrow::Left),
+                        b'H' => return Key::Home,
+                        b'F' => return Key::End,
+                        n @ b'0'..=b'9' => match self.read() {
+                            Some(b'~') => match n {
+                                b'1' | b'7' => return Key::Home,
+                                b'4' | b'8' => return Key::End,
+                                b'3' => return Key::Del,
+                                b'5' => return Key::Page(Page::Up),
+                                b'6' => return Key::Page(Page::Down),
+                                _ => {}
+                            },
+                            _ => {}
+                        },
+                        _ => {}
+                    },
+                    None => {}
+                }
+                return Key::Unknown;
+            }
             Some(b'O') => match self.read() {
                 Some(b'H') => return Key::Home,
                 Some(b'F') => return Key::End,
