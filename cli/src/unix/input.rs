@@ -90,6 +90,7 @@ impl Input for StdinRaw {
             // ASCII 0x00~0x7f
             ctrl @ 0x00..=0x1f => match ctrl {
                 0x1b => self.decode_escape_sequence(),
+                b'\t' => Key::Char(ctrl as char),
                 b'\r' | b'\n' => Key::Enter,
                 DELETE => Key::Backspace,
                 REFRESH_SCREEN => Key::Escape,
