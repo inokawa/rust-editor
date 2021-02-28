@@ -1,4 +1,4 @@
-use core::{ansi_escape::*, Decode, Error, Input, Key};
+use core::{Decode, Error, Input, Key, RMCUP, SMCUP};
 use libc::{
     tcgetattr, tcsetattr, termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP,
     IXON, OPOST, STDIN_FILENO, TCSAFLUSH, VMIN, VTIME,

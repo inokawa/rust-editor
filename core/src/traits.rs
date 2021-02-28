@@ -12,6 +12,7 @@ pub trait Input {
 
 pub trait Output {
     fn new() -> Self;
+    fn write(&self, text: &str) -> ();
     fn render_screen(
         &self,
         rows: Vec<String>,
@@ -20,7 +21,6 @@ pub trait Output {
         pos: Position,
     ) -> ();
     fn clear_screen(&self) -> ();
-    fn render(&self, text: &str) -> ();
     fn flush(&self) -> Result<(), Error>;
     fn get_window_size(&self) -> Option<(usize, usize)>;
 }
