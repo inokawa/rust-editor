@@ -1,4 +1,11 @@
+import { Terminal } from "xterm";
+import "xterm/css/xterm.css";
+
 (async () => {
+  const term = new Terminal();
+  term.open(document.getElementById("terminal") as HTMLElement);
+  term.write("Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ");
+
   const wasm = await import("../pkg/index.js");
   console.log(wasm);
 

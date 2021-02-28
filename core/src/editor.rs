@@ -3,10 +3,8 @@ use super::{
     error::Error,
     traits::{Filer, Input, Output},
 };
-use std::{
-    cmp,
-    time::{Duration, Instant},
-};
+use instant::Instant;
+use std::{cmp, time::Duration};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
