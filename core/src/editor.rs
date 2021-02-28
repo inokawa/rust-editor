@@ -394,7 +394,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                         return Some(message);
                     }
                 }
-                Key::Char(c) => {
+                Key::Char(c) | Key::CharUtf8(c) => {
                     message.push(c);
                 }
                 _ => {}
