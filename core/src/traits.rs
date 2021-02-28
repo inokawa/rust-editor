@@ -12,7 +12,13 @@ pub trait Input {
 
 pub trait Output {
     fn new() -> Self;
-    fn render_screen(&self, buf: &str, pos: Position) -> ();
+    fn render_screen(
+        &self,
+        rows: Vec<String>,
+        status_bar: &str,
+        message_bar: &str,
+        pos: Position,
+    ) -> ();
     fn clear_screen(&self) -> ();
     fn render(&self, text: &str) -> ();
     fn flush(&self) -> Result<(), Error>;

@@ -1,5 +1,4 @@
 use super::{
-    ansi_escape::*,
     document::Document,
     error::Error,
     traits::{Filer, Input, Output},
@@ -166,7 +165,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             .map(|row| row.calc_width(0, self.cursor.x - self.col_offset))
             .unwrap_or(0);
         self.output.render_screen(
-            &(rows + &status_bar + &message_bar),
+            rows,
+            &status_bar,
+            &message_bar,
             Position {
                 x: (x + 1),
                 y: (self.cursor.y - self.row_offset) + 1,
@@ -400,12 +401,13 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    fn draw_rows(&mut self) -> String {
-        let mut buf = String::new();
+    fn draw_rows(&mut self) -> Vec<String> {
+        let mut vec = Vec::new();
         let width = self.screen.cols;
         let height = self.screen.rows;
         let rows = self.document.len();
         for y in 0..height {
+            let mut buf = String::new();
             let r_index = y + self.row_offset;
             if r_index >= rows {
                 if rows == 0 && y == height / 3 {
@@ -421,16 +423,13 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                     self.col_offset + width,
                 ));
             }
-
-            buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
-            buf.push_str("\r\n");
+            vec.push(buf);
         }
-        buf
+        vec
     }
 
     fn draw_status_bar(&self) -> String {
         let mut buf = String::new();
-        buf.push_str(REVERSE_VIDEO);
         let left = format!(
             "{} - {} lines {}",
             &self
@@ -462,14 +461,11 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 len += 1;
             }
         }
-        buf.push_str(RESET_FMT);
-        buf.push_str("\r\n");
         buf
     }
 
     fn draw_message_bar(&self) -> String {
         let mut buf = String::new();
-        buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
         if let Some(message) = &self.message {
             if Instant::now() - message.time < Duration::new(5, 0) {
                 let mut text = message.text.clone();
