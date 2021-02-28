@@ -156,10 +156,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     fn refresh_screen(&mut self) -> Result<(), Error> {
         self.scroll();
 
-        let mut buf = String::new();
-        self.draw_rows(&mut buf);
-        self.draw_status_bar(&mut buf);
-        self.draw_message_bar(&mut buf);
+        let rows = self.draw_rows();
+        let status_bar = self.draw_status_bar();
+        let message_bar = self.draw_message_bar();
 
         let x = self
             .document
@@ -167,7 +166,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             .map(|row| row.calc_width(0, self.cursor.x - self.col_offset))
             .unwrap_or(0);
         self.output.render_screen(
-            &buf,
+            &(rows + &status_bar + &message_bar),
             Position {
                 x: (x + 1),
                 y: (self.cursor.y - self.row_offset) + 1,
@@ -401,7 +400,8 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    fn draw_rows(&mut self, buf: &mut String) {
+    fn draw_rows(&mut self) -> String {
+        let mut buf = String::new();
         let width = self.screen.cols;
         let height = self.screen.rows;
         let rows = self.document.len();
@@ -425,9 +425,11 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
             buf.push_str("\r\n");
         }
+        buf
     }
 
-    fn draw_status_bar(&self, buf: &mut String) {
+    fn draw_status_bar(&self) -> String {
+        let mut buf = String::new();
         buf.push_str(REVERSE_VIDEO);
         let left = format!(
             "{} - {} lines {}",
@@ -462,9 +464,11 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
         buf.push_str(RESET_FMT);
         buf.push_str("\r\n");
+        buf
     }
 
-    fn draw_message_bar(&self, buf: &mut String) {
+    fn draw_message_bar(&self) -> String {
+        let mut buf = String::new();
         buf.push_str(CLEAR_LINE_RIGHT_OF_CURSOR);
         if let Some(message) = &self.message {
             if Instant::now() - message.time < Duration::new(5, 0) {
@@ -473,6 +477,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 buf.push_str(&text);
             }
         }
+        buf
     }
 }
 
