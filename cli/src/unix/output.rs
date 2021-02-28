@@ -21,10 +21,13 @@ impl Output for Stdout {
         Ok(())
     }
 
-    fn move_cursor(&self, pos: Position) {
+    fn render_screen(&self, text: &str, pos: Position) {
         let mut buf = String::new();
+        buf.push_str(HIDE_CURSOR);
         buf.push_str(MOVE_CURSOR_TO_START);
+        buf.push_str(text);
         buf.push_str(&format!("\x1b[{};{}H", pos.y, pos.x));
+        buf.push_str(SHOW_CURSOR);
         self.render(&buf);
     }
 
@@ -33,14 +36,6 @@ impl Output for Stdout {
         buf.push_str(CLEAR_SCREEN);
         buf.push_str(MOVE_CURSOR_TO_START);
         self.render(&buf);
-    }
-
-    fn hide_cursor(&self) {
-        self.render(HIDE_CURSOR);
-    }
-
-    fn show_cursor(&self) {
-        self.render(SHOW_CURSOR);
     }
 
     fn get_window_size(&self) -> Option<(usize, usize)> {

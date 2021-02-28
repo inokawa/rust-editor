@@ -157,24 +157,22 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         self.scroll();
 
         let mut buf = String::new();
-        self.output.hide_cursor();
-        buf.push_str(MOVE_CURSOR_TO_START);
-
         self.draw_rows(&mut buf);
         self.draw_status_bar(&mut buf);
         self.draw_message_bar(&mut buf);
-        self.output.render(&buf);
 
         let x = self
             .document
             .row(self.cursor.y)
             .map(|row| row.calc_width(0, self.cursor.x - self.col_offset))
             .unwrap_or(0);
-        self.output.move_cursor(Position {
-            x: (x + 1),
-            y: (self.cursor.y - self.row_offset) + 1,
-        });
-        self.output.show_cursor();
+        self.output.render_screen(
+            &buf,
+            Position {
+                x: (x + 1),
+                y: (self.cursor.y - self.row_offset) + 1,
+            },
+        );
         self.output.flush()?;
 
         Ok(())
