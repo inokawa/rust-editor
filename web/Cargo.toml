@@ -18,18 +18,18 @@ lto = true
 
 [dependencies]
 core = { path = "../core" }
-wasm-bindgen = "0.2.45"
-wee_alloc = { version = "0.4.2", optional = true }
+wasm-bindgen = "0.2.71"
+wee_alloc = { version = "0.4.5", optional = true }
 
 [dependencies.web-sys]
-version = "0.3.22"
+version = "0.3.48"
 features = ["console"]
 
 [target."cfg(debug_assertions)".dependencies]
-console_error_panic_hook = "0.1.5"
+console_error_panic_hook = "0.1.6"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.2.45"
-futures = "0.1.27"
-js-sys = "0.3.22"
-wasm-bindgen-futures = "0.3.22"
+wasm-bindgen-test = "0.3.21"
+futures = "0.3.13"
+js-sys = "0.3.48"
+wasm-bindgen-futures = "0.4.21"
