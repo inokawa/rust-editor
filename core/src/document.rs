@@ -16,6 +16,7 @@ enum Action {
     InsertRow { y: usize, row: Row },
     DeleteRow { y: usize, row: Row },
     SplitRow { x: usize, y: usize, row: Row },
+    JoinRow { x: usize, y: usize, row: Row },
     // TODO keep cursor position
 }
 
@@ -154,8 +155,9 @@ impl Document {
             let next_row = self.rows.remove(at.y + 1);
             if let Some(row) = self.rows.get_mut(at.y) {
                 row.append(&next_row);
-                self.edit(Action::DeleteRow {
-                    y: at.y + 1,
+                self.edit(Action::JoinRow {
+                    x: at.x,
+                    y: at.y,
                     row: next_row,
                 });
             }
@@ -201,6 +203,12 @@ impl Document {
                             self.rows.remove(y + 1);
                         }
                     }
+                    Action::JoinRow { x, y, row } => {
+                        if let Some(row) = self.rows.get_mut(y.clone()) {
+                            let rest = row.split(x.clone());
+                            self.rows.insert(y + 1, rest);
+                        }
+                    }
                 }
                 self.history_index += 1;
             }
@@ -236,6 +244,12 @@ impl Document {
                         if let Some(row) = self.rows.get_mut(y.clone()) {
                             let rest = row.split(x.clone());
                             self.rows.insert(y + 1, rest);
+                        }
+                    }
+                    Action::JoinRow { x, y, row } => {
+                        if let Some(org_row) = self.rows.get_mut(y.clone()) {
+                            org_row.append(row);
+                            self.rows.remove(y + 1);
                         }
                     }
                 }
