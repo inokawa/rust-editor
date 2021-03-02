@@ -15,7 +15,7 @@ enum Action {
     Delete { pos: Position, c: char },
     InsertRow { y: usize, row: Row },
     DeleteRow { y: usize, row: Row },
-    // TODO handle split by enter
+    SplitRow { x: usize, y: usize, row: Row },
     // TODO keep cursor position
 }
 
@@ -105,14 +105,19 @@ impl Document {
         if let Some(row) = self.rows.get_mut(at.y) {
             r = row.split(at.x);
             self.rows.insert(at.y + 1, r.clone());
+            self.edit(Action::SplitRow {
+                x: at.x,
+                y: at.y,
+                row: r,
+            });
         } else {
             r = Row::new();
             self.rows.push(r.clone());
+            self.edit(Action::InsertRow {
+                y: at.y + 1,
+                row: r,
+            });
         }
-        self.edit(Action::InsertRow {
-            y: at.y + 1,
-            row: r,
-        });
     }
 
     pub fn insert(&mut self, c: char, at: &Position) {
@@ -190,6 +195,12 @@ impl Document {
                     Action::DeleteRow { y, row } => {
                         self.rows.insert(y.clone(), row.clone());
                     }
+                    Action::SplitRow { x, y, row } => {
+                        if let Some(org_row) = self.rows.get_mut(y.clone()) {
+                            org_row.append(row);
+                            self.rows.remove(y + 1);
+                        }
+                    }
                 }
                 self.history_index += 1;
             }
@@ -220,6 +231,12 @@ impl Document {
                     }
                     Action::DeleteRow { y, row } => {
                         self.rows.remove(y.clone());
+                    }
+                    Action::SplitRow { x, y, row } => {
+                        if let Some(row) = self.rows.get_mut(y.clone()) {
+                            let rest = row.split(x.clone());
+                            self.rows.insert(y + 1, rest);
+                        }
                     }
                 }
                 self.history_index -= 1;
