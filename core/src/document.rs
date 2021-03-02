@@ -85,13 +85,11 @@ impl Document {
         self.dirty = 0;
     }
 
-    fn edit(&mut self) {
+    fn edit(&mut self, action: Action) {
         self.dirty += 1;
         self.histories = self.histories[..(self.histories.len() - self.history_index)].to_vec();
         self.history_index = 0;
-    }
 
-    fn push_history(&mut self, action: Action) {
         self.histories.push(action);
         let len = self.histories.len();
         if len > MAX_UNDO_LENGTH {
@@ -111,8 +109,7 @@ impl Document {
             r = Row::new();
             self.rows.push(r.clone());
         }
-        self.edit();
-        self.push_history(Action::InsertRow {
+        self.edit(Action::InsertRow {
             y: at.y + 1,
             row: r,
         });
@@ -123,16 +120,19 @@ impl Document {
             let mut row = Row::new();
             row.insert(c, 0);
             self.rows.push(row);
+            self.edit(Action::Insert {
+                pos: Position { x: at.x, y: at.y },
+                c,
+            });
         } else if at.y < self.len() {
             if let Some(row) = self.rows.get_mut(at.y) {
                 row.insert(c, at.x);
+                self.edit(Action::Insert {
+                    pos: Position { x: at.x, y: at.y },
+                    c,
+                });
             }
         }
-        self.edit();
-        self.push_history(Action::Insert {
-            pos: Position { x: at.x, y: at.y },
-            c,
-        });
     }
 
     pub fn delete(&mut self, at: &Position) {
@@ -149,7 +149,7 @@ impl Document {
             let next_row = self.rows.remove(at.y + 1);
             if let Some(row) = self.rows.get_mut(at.y) {
                 row.append(&next_row);
-                self.push_history(Action::DeleteRow {
+                self.edit(Action::DeleteRow {
                     y: at.y + 1,
                     row: next_row,
                 });
@@ -157,14 +157,13 @@ impl Document {
         } else {
             if let Some(row) = self.rows.get_mut(at.y) {
                 if let Some(deleted) = row.delete(at.x) {
-                    self.push_history(Action::Delete {
+                    self.edit(Action::Delete {
                         pos: Position { x: at.x, y: at.y },
                         c: deleted,
                     });
                 }
             }
         }
-        self.edit();
     }
 
     pub fn undo(&mut self) {
