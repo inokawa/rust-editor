@@ -10,7 +10,7 @@ const MAX_UNDO_LENGTH: usize = 1000;
 const TAB_STOP: usize = 4;
 
 #[derive(Clone)]
-enum Action {
+enum History {
     Insert { pos: Position, c: char },
     Delete { pos: Position, c: char },
     InsertRow { y: usize, row: Row },
@@ -25,7 +25,7 @@ pub struct Document {
     rows: Vec<Row>,
     dirty: usize,
     history_index: usize,
-    histories: Vec<Action>,
+    histories: Vec<History>,
 }
 
 impl Document {
@@ -86,7 +86,7 @@ impl Document {
         self.dirty = 0;
     }
 
-    fn edit(&mut self, action: Action) {
+    fn edited(&mut self, action: History) {
         self.dirty += 1;
         self.histories = self.histories[..(self.histories.len() - self.history_index)].to_vec();
         self.history_index = 0;
@@ -102,19 +102,18 @@ impl Document {
         if at.y > self.len() {
             return;
         }
-        let r;
         if let Some(row) = self.rows.get_mut(at.y) {
-            r = row.split(at.x);
+            let r = row.split(at.x);
             self.rows.insert(at.y + 1, r.clone());
-            self.edit(Action::SplitRow {
+            self.edited(History::SplitRow {
                 x: at.x,
                 y: at.y,
                 row: r,
             });
         } else {
-            r = Row::new();
+            let r = Row::new();
             self.rows.push(r.clone());
-            self.edit(Action::InsertRow {
+            self.edited(History::InsertRow {
                 y: at.y + 1,
                 row: r,
             });
@@ -126,14 +125,14 @@ impl Document {
             let mut row = Row::new();
             row.insert(c, 0);
             self.rows.push(row);
-            self.edit(Action::Insert {
+            self.edited(History::Insert {
                 pos: Position { x: at.x, y: at.y },
                 c,
             });
         } else if at.y < self.len() {
             if let Some(row) = self.rows.get_mut(at.y) {
                 row.insert(c, at.x);
-                self.edit(Action::Insert {
+                self.edited(History::Insert {
                     pos: Position { x: at.x, y: at.y },
                     c,
                 });
@@ -155,7 +154,7 @@ impl Document {
             let next_row = self.rows.remove(at.y + 1);
             if let Some(row) = self.rows.get_mut(at.y) {
                 row.append(&next_row);
-                self.edit(Action::JoinRow {
+                self.edited(History::JoinRow {
                     x: at.x,
                     y: at.y,
                     row: next_row,
@@ -164,7 +163,7 @@ impl Document {
         } else {
             if let Some(row) = self.rows.get_mut(at.y) {
                 if let Some(deleted) = row.delete(at.x) {
-                    self.edit(Action::Delete {
+                    self.edited(History::Delete {
                         pos: Position { x: at.x, y: at.y },
                         c: deleted,
                     });
@@ -181,29 +180,29 @@ impl Document {
         match self.histories.get(index - 1) {
             Some(action) => {
                 match action {
-                    Action::Insert { pos, c } => {
+                    History::Insert { pos, c } => {
                         if let Some(row) = self.rows.get_mut(pos.y) {
                             if let Some(_) = row.delete(pos.x) {}
                         }
                     }
-                    Action::Delete { pos, c } => {
+                    History::Delete { pos, c } => {
                         if let Some(row) = self.rows.get_mut(pos.y) {
                             row.insert(c.clone(), pos.x);
                         }
                     }
-                    Action::InsertRow { y, row } => {
+                    History::InsertRow { y, row } => {
                         self.rows.remove(y.clone());
                     }
-                    Action::DeleteRow { y, row } => {
+                    History::DeleteRow { y, row } => {
                         self.rows.insert(y.clone(), row.clone());
                     }
-                    Action::SplitRow { x, y, row } => {
+                    History::SplitRow { x, y, row } => {
                         if let Some(org_row) = self.rows.get_mut(y.clone()) {
                             org_row.append(row);
                             self.rows.remove(y + 1);
                         }
                     }
-                    Action::JoinRow { x, y, row } => {
+                    History::JoinRow { x, y, row } => {
                         if let Some(row) = self.rows.get_mut(y.clone()) {
                             let rest = row.split(x.clone());
                             self.rows.insert(y + 1, rest);
@@ -212,7 +211,7 @@ impl Document {
                 }
                 self.history_index += 1;
             }
-            _ => {}
+            None => {}
         }
     }
 
@@ -224,29 +223,29 @@ impl Document {
         match self.histories.get(index) {
             Some(action) => {
                 match action {
-                    Action::Insert { pos, c } => {
+                    History::Insert { pos, c } => {
                         if let Some(row) = self.rows.get_mut(pos.y) {
                             row.insert(c.clone(), pos.x);
                         }
                     }
-                    Action::Delete { pos, c } => {
+                    History::Delete { pos, c } => {
                         if let Some(row) = self.rows.get_mut(pos.y) {
                             if let Some(_) = row.delete(pos.x) {}
                         }
                     }
-                    Action::InsertRow { y, row } => {
+                    History::InsertRow { y, row } => {
                         self.rows.insert(y.clone(), row.clone());
                     }
-                    Action::DeleteRow { y, row } => {
+                    History::DeleteRow { y, row } => {
                         self.rows.remove(y.clone());
                     }
-                    Action::SplitRow { x, y, row } => {
+                    History::SplitRow { x, y, row } => {
                         if let Some(row) = self.rows.get_mut(y.clone()) {
                             let rest = row.split(x.clone());
                             self.rows.insert(y + 1, rest);
                         }
                     }
-                    Action::JoinRow { x, y, row } => {
+                    History::JoinRow { x, y, row } => {
                         if let Some(org_row) = self.rows.get_mut(y.clone()) {
                             org_row.append(row);
                             self.rows.remove(y + 1);
@@ -255,7 +254,7 @@ impl Document {
                 }
                 self.history_index -= 1;
             }
-            _ => {}
+            None => {}
         }
     }
 
