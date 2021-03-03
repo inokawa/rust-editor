@@ -8,6 +8,8 @@ impl Input for WebInput {
     }
 
     fn wait_for_key(&self) -> Key {
-        Key::Enter
+        loop {
+            return Key::Char('a');
+        }
     }
 }

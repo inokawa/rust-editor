@@ -1,6 +1,7 @@
 pub mod filer;
 pub mod input;
 pub mod output;
+pub mod xterm;
 
 use core::{Editor, Filer, Input, Output};
 use wasm_bindgen::prelude::*;
