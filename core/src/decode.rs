@@ -17,34 +17,30 @@ pub trait Decode {
     fn read(&self) -> Option<u8>;
 
     fn decode(&self) -> Key {
-        let b: u8;
-        loop {
-            if let Some(res) = self.read() {
-                b = res;
-                break;
-            }
+        if let Some(b) = self.read() {
+            return match b {
+                // ASCII 0x00~0x7f
+                ctrl @ 0x00..=0x1f => match ctrl {
+                    0x1b => self.decode_escape_sequence(),
+                    b'\t' => Key::Char(ctrl as char),
+                    b'\r' | b'\n' => Key::Enter,
+                    DELETE => Key::Backspace,
+                    REFRESH_SCREEN => Key::Escape,
+                    FIND => Key::Command(Command::Find),
+                    UNDO => Key::Command(Command::Undo),
+                    REDO => Key::Command(Command::Redo),
+                    SAVE => Key::Command(Command::Save),
+                    EXIT => Key::Command(Command::Exit),
+                    _ => Key::Unknown,
+                },
+                0x20 => Key::Char(b as char),
+                0x21..=0x7e => Key::Char(b as char),
+                0x7f => Key::Backspace,
+                // UTF-8 0x80~0xff
+                0x80..=0xff => self.decode_utf8(b),
+            };
         }
-        match b {
-            // ASCII 0x00~0x7f
-            ctrl @ 0x00..=0x1f => match ctrl {
-                0x1b => self.decode_escape_sequence(),
-                b'\t' => Key::Char(ctrl as char),
-                b'\r' | b'\n' => Key::Enter,
-                DELETE => Key::Backspace,
-                REFRESH_SCREEN => Key::Escape,
-                FIND => Key::Command(Command::Find),
-                UNDO => Key::Command(Command::Undo),
-                REDO => Key::Command(Command::Redo),
-                SAVE => Key::Command(Command::Save),
-                EXIT => Key::Command(Command::Exit),
-                _ => Key::Unknown,
-            },
-            0x20 => Key::Char(b as char),
-            0x21..=0x7e => Key::Char(b as char),
-            0x7f => Key::Backspace,
-            // UTF-8 0x80~0xff
-            0x80..=0xff => self.decode_utf8(b),
-        }
+        Key::Unknown
     }
 
     fn decode_escape_sequence(&self) -> Key {

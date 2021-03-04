@@ -194,6 +194,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     fn process_key_press(&mut self) -> Result<bool, Error> {
+        let mut pressed = true;
         match self.input.wait_for_key() {
             Key::Escape => {}
             Key::Enter => {
@@ -267,10 +268,12 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 self.document.insert(c, &self.cursor);
                 self.move_cursor(&Arrow::Right);
             }
-            Key::Unknown => {}
+            Key::Unknown => {
+                pressed = false;
+            }
         }
 
-        if self.confirm == true {
+        if pressed == true && self.confirm == true {
             self.confirm = false;
             self.message = None;
         }
