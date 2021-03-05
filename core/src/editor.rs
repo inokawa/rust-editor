@@ -120,10 +120,10 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    pub fn load(&mut self, filename: &String) -> Result<(), Error> {
+    pub fn load(&mut self, filename: &String) -> Result<&mut Self, Error> {
         let file = self.filer.load(&filename)?;
         self.document = Document::open(filename.clone(), file);
-        Ok(())
+        Ok(self)
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
