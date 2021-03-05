@@ -75,6 +75,13 @@ pub enum SearchDirection {
     Backward,
 }
 
+enum Mode {
+    Edit,
+    Search,
+    Save,
+    Exit,
+}
+
 pub struct Editor<I: Input, O: Output, F: Filer> {
     input: I,
     output: O,
@@ -143,10 +150,18 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     pub fn run(&mut self) -> Result<(), Error> {
         loop {
             self.refresh_screen()?;
-            let quit = self.process_key_press()?;
-            if quit == true {
-                self.output.clear_screen();
-                break;
+            match self.process_key_press()? {
+                Mode::Edit => {}
+                Mode::Search => {
+                    self.find();
+                }
+                Mode::Save => {
+                    self.save();
+                }
+                Mode::Exit => {
+                    self.output.clear_screen();
+                    break;
+                }
             }
         }
         Ok(())
@@ -193,7 +208,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    fn process_key_press(&mut self) -> Result<bool, Error> {
+    fn process_key_press(&mut self) -> Result<Mode, Error> {
         let mut pressed = true;
         match self.input.wait_for_key() {
             Key::Escape => {}
@@ -241,7 +256,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             }
             Key::Command(command) => match command {
                 Command::Find => {
-                    self.find();
+                    return Ok(Mode::Search);
                 }
                 Command::Undo => {
                     self.document.undo();
@@ -250,7 +265,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                     self.document.redo();
                 }
                 Command::Save => {
-                    self.save();
+                    return Ok(Mode::Save);
                 }
                 Command::Exit => {
                     if self.document.is_dirty() && self.confirm == false {
@@ -258,9 +273,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                         self.message = Some(Message::new(
                             "WARNING!!! File has unsaved changes. Press Ctrl-Q 1 more times to quit.",
                         ));
-                        return Ok(false);
+                        return Ok(Mode::Edit);
                     } else {
-                        return Ok(true);
+                        return Ok(Mode::Exit);
                     }
                 }
             },
@@ -277,7 +292,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             self.confirm = false;
             self.message = None;
         }
-        Ok(false)
+        Ok(Mode::Edit)
     }
 
     fn move_cursor(&mut self, key: &Arrow) {
