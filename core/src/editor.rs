@@ -126,16 +126,25 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         Ok(self)
     }
 
+    pub fn save(&mut self) -> Result<(), Error> {
+        let filename = self.document.filename.clone().unwrap_or(String::new());
+        let res = self.filer.save(&filename, self.document.contents());
+        if res.is_ok() {
+            self.document.reset_dirty();
+        }
+        res
+    }
+
     pub fn run(&mut self) -> Result<(), Error> {
         loop {
             self.refresh_screen()?;
             match self.process_key_press()? {
                 Mode::Edit => {}
                 Mode::Search => {
-                    self.find();
+                    self.search_prompt();
                 }
                 Mode::Save => {
-                    self.save();
+                    self.save_prompt();
                 }
                 Mode::Exit => {
                     self.output.clear_screen();
@@ -322,7 +331,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    fn save(&mut self) {
+    fn save_prompt(&mut self) {
         if self.document.filename.is_none() {
             let filename = self.prompt("Save as", "ESC to cancel", |_, _, _| {});
             if filename.is_none() {
@@ -331,19 +340,13 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             }
             self.document.filename = filename;
         }
-        let filename = self.document.filename.clone().unwrap();
-        match self.filer.save(&filename, self.document.contents()) {
-            Ok(_) => {
-                self.document.reset_dirty();
-                self.message = Some(Message::new("File saved successfully."));
-            }
-            Err(_) => {
-                self.message = Some(Message::new("Error writing file!"));
-            }
+        self.message = match self.save() {
+            Ok(_) => Some(Message::new("File saved successfully.")),
+            Err(_) => Some(Message::new("Error writing file!")),
         }
     }
 
-    fn find(&mut self) {
+    fn search_prompt(&mut self) {
         let cursor = self.cursor.clone();
         let mut direction = SearchDirection::Forward;
         match self.prompt("Search", "Use ESC/Arrows/Enter", |editor, key, query| {
