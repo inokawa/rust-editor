@@ -349,12 +349,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     fn search_prompt(&mut self) {
         let cursor = self.cursor.clone();
         let mut direction = SearchDirection::Forward;
-        match self.prompt("Search", "Use ESC/Arrows/Enter", |editor, key, query| {
+        let res = self.prompt("Search", "Use ESC/Arrows/Enter", |editor, key, query| {
             let mut moved = false;
             match key {
-                Key::Enter | Key::Escape => {
-                    return;
-                }
                 Key::Arrow(Arrow::Left) | Key::Arrow(Arrow::Up) => {
                     direction = SearchDirection::Backward;
                     editor.move_cursor(&Arrow::Left);
@@ -379,13 +376,11 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                     SearchDirection::Backward => editor.move_cursor(&Arrow::Right),
                 }
             }
-        }) {
-            Some(query) => {}
-            None => {
-                self.cursor = cursor;
-                self.scroll();
-            }
-        };
+        });
+        if res.is_none() {
+            self.cursor = cursor;
+            self.scroll();
+        }
     }
 
     fn prompt<C>(&mut self, desc1: &str, desc2: &str, mut cb: C) -> Option<String>
