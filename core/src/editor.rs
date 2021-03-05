@@ -126,27 +126,6 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         Ok(())
     }
 
-    pub fn save(&mut self) {
-        if self.document.filename.is_none() {
-            let filename = self.prompt("Save as", "ESC to cancel", |_, _, _| {});
-            if filename.is_none() {
-                self.message = Some(Message::new("Save aborted"));
-                return;
-            }
-            self.document.filename = filename;
-        }
-        let filename = self.document.filename.clone().unwrap();
-        match self.filer.save(&filename, self.document.contents()) {
-            Ok(_) => {
-                self.document.reset_dirty();
-                self.message = Some(Message::new("File saved successfully."));
-            }
-            Err(_) => {
-                self.message = Some(Message::new("Error writing file!"));
-            }
-        }
-    }
-
     pub fn run(&mut self) -> Result<(), Error> {
         loop {
             self.refresh_screen()?;
@@ -339,6 +318,27 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         if let Some(r) = self.document.row(self.cursor.y) {
             if self.cursor.x > r.len() {
                 self.cursor.x = r.len();
+            }
+        }
+    }
+
+    fn save(&mut self) {
+        if self.document.filename.is_none() {
+            let filename = self.prompt("Save as", "ESC to cancel", |_, _, _| {});
+            if filename.is_none() {
+                self.message = Some(Message::new("Save aborted"));
+                return;
+            }
+            self.document.filename = filename;
+        }
+        let filename = self.document.filename.clone().unwrap();
+        match self.filer.save(&filename, self.document.contents()) {
+            Ok(_) => {
+                self.document.reset_dirty();
+                self.message = Some(Message::new("File saved successfully."));
+            }
+            Err(_) => {
+                self.message = Some(Message::new("Error writing file!"));
             }
         }
     }
