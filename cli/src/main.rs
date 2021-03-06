@@ -5,12 +5,9 @@ use std::env;
 fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
 
-    let input = StdinRaw::new()?;
+    let mut editor = Editor::new(StdinRaw::new()?, Stdout::new(), Fs::new())?;
     if let Some(filename) = args.get(1) {
-        Editor::new(input, Stdout::new(), Fs::new())?
-            .load(filename)?
-            .run()
-    } else {
-        Editor::new(input, Stdout::new(), Fs::new())?.run()
+        editor.load(filename)?;
     }
+    editor.run()
 }
