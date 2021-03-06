@@ -1,3 +1,5 @@
+use super::ansi_escape::*;
+
 #[derive(Clone)]
 pub struct Token {
     pub index: usize,
@@ -11,10 +13,10 @@ pub enum Highlight {
 }
 
 impl Highlight {
-    pub fn color(&self) -> u8 {
+    pub fn color(&self) -> &str {
         match self {
-            Highlight::Number => 31,
-            Highlight::None => 37,
+            Highlight::Number => COLOR_RED,
+            Highlight::None => COLOR_WHITE,
         }
     }
 }

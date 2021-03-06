@@ -1,6 +1,7 @@
 use super::{
+    ansi_escape::*,
     editor::{Position, SearchDirection},
-    tokenizer::{matcher, Highlight, Token},
+    tokenizer::*,
 };
 use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
@@ -324,7 +325,7 @@ impl Row {
                         "\t" => " ".repeat(TAB_STOP),
                         _ => {
                             if let Some(h) = self.highlight.iter().find(|h| h.index == start + i) {
-                                return format!("\x1b[{}m{}\x1b[39m", h.highlight.color(), c);
+                                return format!("{}{}{}", h.highlight.color(), c, COLOR_DEFAULT);
                             }
                             c.to_string()
                         }
