@@ -354,12 +354,19 @@ impl Row {
 
     pub fn update_highlight(&mut self) {
         let mut highlight = Vec::new();
+        let mut is_prev_sep = true;
+        let mut prev_highlight = Highlight::None;
         self.string.graphemes(true).enumerate().for_each(|(i, s)| {
-            if let Some(h) = matcher(s) {
+            if is_digit(s) && (is_prev_sep || prev_highlight == Highlight::Number) {
                 highlight.push(Token {
                     index: i,
-                    highlight: h,
-                })
+                    highlight: Highlight::Number,
+                });
+                prev_highlight = Highlight::Number;
+                is_prev_sep = false;
+            } else {
+                prev_highlight = Highlight::None;
+                is_prev_sep = is_separator(s);
             }
         });
         self.highlight = highlight;

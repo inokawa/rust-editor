@@ -21,9 +21,13 @@ impl Highlight {
     }
 }
 
-pub fn matcher(s: &str) -> Option<Highlight> {
+pub fn is_digit(s: &str) -> bool {
     match s {
-        "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => Some(Highlight::Number),
-        _ => None,
+        "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => true,
+        _ => false,
     }
+}
+
+pub fn is_separator(s: &str) -> bool {
+    s == " " || s == "\0" || ",.()+-/*=~%<>[];".contains(s)
 }
