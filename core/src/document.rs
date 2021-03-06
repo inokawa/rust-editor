@@ -1,7 +1,7 @@
 use super::{
     ansi_escape::*,
     editor::{Position, SearchDirection},
-    languages::Language,
+    languages::{Flag, Language},
     tokenizer::*,
 };
 use std::cmp;
@@ -23,7 +23,7 @@ enum History {
 }
 
 pub struct Document {
-    pub filename: Option<String>,
+    filename: Option<String>,
     rows: Vec<Row>,
     dirty: usize,
     history_index: usize,
@@ -63,6 +63,15 @@ impl Document {
         }
     }
 
+    pub fn get_filename(&self) -> Option<String> {
+        self.filename.clone()
+    }
+
+    pub fn set_filename(&mut self, filename: Option<String>) {
+        self.filename = filename.clone();
+        self.language = Language::detect(&filename.unwrap_or(String::new()));
+    }
+
     pub fn contents(&self) -> Vec<String> {
         self.rows.iter().map(|r| r.string.clone()).collect()
     }
@@ -80,8 +89,9 @@ impl Document {
     }
 
     pub fn update_highlights(&mut self) {
+        let flags = self.language.flags();
         for row in &mut self.rows {
-            row.update_highlight();
+            row.update_highlight(flags);
         }
     }
 
@@ -357,24 +367,27 @@ impl Row {
         string
     }
 
-    pub fn update_highlight(&mut self) {
+    pub fn update_highlight(&mut self, flags: &[&Flag]) {
         let mut highlight = Vec::new();
         let mut is_prev_sep = true;
         let mut prev_highlight = Highlight::None;
         self.string.graphemes(true).enumerate().for_each(|(i, s)| {
-            if (is_digit(s) && (is_prev_sep || prev_highlight == Highlight::Number))
-                || s == "." && prev_highlight == Highlight::Number
-            {
-                highlight.push(Token {
-                    index: i,
-                    highlight: Highlight::Number,
-                });
-                prev_highlight = Highlight::Number;
-                is_prev_sep = false;
-            } else {
-                prev_highlight = Highlight::None;
-                is_prev_sep = is_separator(s);
+            if flags.contains(&&Flag::Number) {
+                if (is_digit(s) && (is_prev_sep || prev_highlight == Highlight::Number))
+                    || s == "." && prev_highlight == Highlight::Number
+                {
+                    highlight.push(Token {
+                        index: i,
+                        highlight: Highlight::Number,
+                    });
+                    prev_highlight = Highlight::Number;
+                    is_prev_sep = false;
+                    return;
+                }
             }
+
+            prev_highlight = Highlight::None;
+            is_prev_sep = is_separator(s);
         });
         self.highlight = highlight;
     }

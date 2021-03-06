@@ -127,7 +127,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     pub fn save(&mut self) -> Result<(), Error> {
-        let filename = self.document.filename.clone().unwrap_or(String::new());
+        let filename = self.document.get_filename().unwrap_or(String::new());
         let res = self.filer.save(&filename, self.document.contents());
         if res.is_ok() {
             self.document.reset_dirty();
@@ -333,13 +333,13 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     fn save_prompt(&mut self) {
-        if self.document.filename.is_none() {
+        if self.document.get_filename().is_none() {
             let filename = self.prompt("Save as", "ESC to cancel", |_, _, _| {});
             if filename.is_none() {
                 self.message = Some(Message::new("Save aborted"));
                 return;
             }
-            self.document.filename = filename;
+            self.document.set_filename(filename);
         }
         self.message = match self.save() {
             Ok(_) => Some(Message::new("File saved successfully.")),
@@ -451,8 +451,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             "{} - {} lines {}",
             &self
                 .document
-                .filename
-                .clone()
+                .get_filename()
                 .map(|mut n| {
                     n.truncate(20);
                     n

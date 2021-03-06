@@ -3,6 +3,11 @@ pub enum Language {
     Unknown,
 }
 
+#[derive(PartialEq)]
+pub enum Flag {
+    Number,
+}
+
 impl Language {
     pub fn detect(filename: &str) -> Language {
         for ext in Language::C.exts() {
@@ -23,6 +28,13 @@ impl Language {
     pub fn exts(&self) -> &'static [&'static str] {
         match self {
             Language::C => &[".c", ".h", ".cpp"],
+            Language::Unknown => &[],
+        }
+    }
+
+    pub fn flags(&self) -> &'static [&'static Flag] {
+        match self {
+            Language::C => &[&Flag::Number],
             Language::Unknown => &[],
         }
     }
