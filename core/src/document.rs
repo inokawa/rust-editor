@@ -68,10 +68,15 @@ impl Document {
 
     pub fn render_row(&mut self, y: usize, start: usize, end: usize) -> String {
         if let Some(row) = self.rows.get_mut(y) {
-            row.update_highlight(start, end);
             row.render(start, end)
         } else {
             String::new()
+        }
+    }
+
+    pub fn update_highlights(&mut self) {
+        for row in &mut self.rows {
+            row.update_highlight();
         }
     }
 
@@ -347,10 +352,7 @@ impl Row {
         string
     }
 
-    pub fn update_highlight(&mut self, start: usize, end: usize) {
-        if start > end {
-            return;
-        }
+    pub fn update_highlight(&mut self) {
         let mut highlight = Vec::new();
         self.string.graphemes(true).enumerate().for_each(|(i, s)| {
             if let Some(h) = matcher(s) {

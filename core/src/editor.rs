@@ -157,6 +157,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     fn refresh_screen(&mut self) -> Result<(), Error> {
         self.scroll();
+        self.document.update_highlights();
 
         let rows = self.draw_rows();
         let status_bar = self.draw_status_bar();
