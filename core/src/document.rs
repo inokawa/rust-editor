@@ -357,7 +357,9 @@ impl Row {
         let mut is_prev_sep = true;
         let mut prev_highlight = Highlight::None;
         self.string.graphemes(true).enumerate().for_each(|(i, s)| {
-            if is_digit(s) && (is_prev_sep || prev_highlight == Highlight::Number) {
+            if (is_digit(s) && (is_prev_sep || prev_highlight == Highlight::Number))
+                || s == "." && prev_highlight == Highlight::Number
+            {
                 highlight.push(Token {
                     index: i,
                     highlight: Highlight::Number,
