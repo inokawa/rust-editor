@@ -3,6 +3,7 @@ mod decode;
 mod document;
 mod editor;
 mod error;
+mod languages;
 mod tokenizer;
 mod traits;
 

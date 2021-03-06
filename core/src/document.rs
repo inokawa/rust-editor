@@ -1,6 +1,7 @@
 use super::{
     ansi_escape::*,
     editor::{Position, SearchDirection},
+    languages::Language,
     tokenizer::*,
 };
 use std::cmp;
@@ -27,6 +28,7 @@ pub struct Document {
     dirty: usize,
     history_index: usize,
     histories: Vec<History>,
+    pub language: Language,
 }
 
 impl Document {
@@ -37,6 +39,7 @@ impl Document {
             dirty: 0,
             history_index: 0,
             histories: Vec::new(),
+            language: Language::Unknown,
         }
     }
 
@@ -49,12 +52,14 @@ impl Document {
             })
             .collect();
 
+        let language = Language::detect(&filename);
         Document {
             filename: Some(filename),
             rows,
             dirty: 0,
             history_index: 0,
             histories: Vec::new(),
+            language,
         }
     }
 

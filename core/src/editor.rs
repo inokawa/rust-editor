@@ -465,7 +465,12 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 ""
             }
         );
-        let right = format!("{}/{}", self.cursor.y, self.document.len());
+        let right = format!(
+            "{} | {}/{}",
+            self.document.language.name(),
+            self.cursor.y,
+            self.document.len()
+        );
         let rlen = right.len();
         let mut len = cmp::min(left.len(), self.screen.cols);
         buf.push_str(&left);
