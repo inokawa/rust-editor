@@ -1,6 +1,6 @@
 use super::{
     editor::{Position, SearchDirection},
-    tokenizer::{Highlight, Token},
+    tokenizer::{matcher, Highlight, Token},
 };
 use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
@@ -324,12 +324,7 @@ impl Row {
                         "\t" => " ".repeat(TAB_STOP),
                         _ => {
                             if let Some(h) = self.highlight.iter().find(|h| h.index == start + i) {
-                                return match h.highlight {
-                                    Highlight::Number => {
-                                        format!("{}{}{}", "\x1b[31m", c, "\x1b[39m")
-                                    }
-                                    Highlight::None => c.to_string(),
-                                };
+                                return format!("\x1b[{}m{}\x1b[39m", h.highlight.color(), c);
                             }
                             c.to_string()
                         }
@@ -344,18 +339,14 @@ impl Row {
             return;
         }
         let mut highlight = Vec::new();
-        self.string
-            .graphemes(true)
-            .enumerate()
-            .for_each(|(i, s)| match s {
-                "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => {
-                    highlight.push(Token {
-                        index: i,
-                        highlight: Highlight::Number,
-                    })
-                }
-                _ => {}
-            });
+        self.string.graphemes(true).enumerate().for_each(|(i, s)| {
+            if let Some(h) = matcher(s) {
+                highlight.push(Token {
+                    index: i,
+                    highlight: h,
+                })
+            }
+        });
         self.highlight = highlight;
     }
 
