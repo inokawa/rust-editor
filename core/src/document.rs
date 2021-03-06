@@ -1,7 +1,7 @@
 use super::{
     ansi_escape::*,
     editor::{Position, SearchDirection},
-    languages::{Flag, Language},
+    languages::Language,
     tokenizer::*,
 };
 use std::cmp;
@@ -367,12 +367,37 @@ impl Row {
         string
     }
 
-    pub fn update_highlight(&mut self, flags: &[&Flag]) {
+    pub fn update_highlight(&mut self, flags: &[&Highlight]) {
         let mut highlight = Vec::new();
         let mut is_prev_sep = true;
+        let mut in_string = "";
         let mut prev_highlight = Highlight::None;
         self.string.graphemes(true).enumerate().for_each(|(i, s)| {
-            if flags.contains(&&Flag::Number) {
+            if flags.contains(&&Highlight::String) {
+                if in_string != "" {
+                    highlight.push(Token {
+                        index: i,
+                        highlight: Highlight::String,
+                    });
+                    if in_string == s {
+                        in_string = "";
+                    }
+                    is_prev_sep = true;
+                    prev_highlight = Highlight::String;
+                    return;
+                } else {
+                    if s == "\"" || s == "'" {
+                        highlight.push(Token {
+                            index: i,
+                            highlight: Highlight::String,
+                        });
+                        in_string = s;
+                        prev_highlight = Highlight::String;
+                        return;
+                    }
+                }
+            }
+            if flags.contains(&&Highlight::Number) {
                 if (is_digit(s) && (is_prev_sep || prev_highlight == Highlight::Number))
                     || s == "." && prev_highlight == Highlight::Number
                 {

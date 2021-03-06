@@ -1,11 +1,8 @@
+use super::tokenizer::Highlight;
+
 pub enum Language {
     C,
     Unknown,
-}
-
-#[derive(PartialEq)]
-pub enum Flag {
-    Number,
 }
 
 impl Language {
@@ -32,9 +29,9 @@ impl Language {
         }
     }
 
-    pub fn flags(&self) -> &'static [&'static Flag] {
+    pub fn flags(&self) -> &'static [&'static Highlight] {
         match self {
-            Language::C => &[&Flag::Number],
+            Language::C => &[&Highlight::String, &Highlight::Number],
             Language::Unknown => &[],
         }
     }
