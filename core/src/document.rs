@@ -316,7 +316,9 @@ impl Row {
         }
         let start = cmp::max(0, start);
         let end = cmp::min(self.string.len(), end);
-        self.string
+        let mut highlight = &Highlight::None;
+        let mut string = self
+            .string
             .get(start..end)
             .map(|s| {
                 s.graphemes(true)
@@ -324,15 +326,25 @@ impl Row {
                     .map(|(i, c)| match c {
                         "\t" => " ".repeat(TAB_STOP),
                         _ => {
-                            if let Some(h) = self.highlight.iter().find(|h| h.index == start + i) {
-                                return format!("{}{}{}", h.highlight.color(), c, COLOR_DEFAULT);
+                            let mut hl = String::new();
+                            let h = self
+                                .highlight
+                                .iter()
+                                .find(|h| h.index == start + i)
+                                .map(|h| &h.highlight)
+                                .unwrap_or(&Highlight::None);
+                            if highlight != h {
+                                highlight = h;
+                                hl.push_str(highlight.color());
                             }
-                            c.to_string()
+                            format!("{}{}", hl, c)
                         }
                     })
                     .collect()
             })
-            .unwrap_or(String::new())
+            .unwrap_or(String::new());
+        string.push_str(&COLOR_DEFAULT);
+        string
     }
 
     pub fn update_highlight(&mut self, start: usize, end: usize) {
