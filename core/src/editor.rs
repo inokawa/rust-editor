@@ -136,23 +136,22 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
-        self.looper(|editor| {
-            editor.refresh_screen()?;
-            match editor.process_key_press()? {
+        loop {
+            self.refresh_screen()?;
+            match self.process_key_press()? {
                 Mode::Edit => {}
                 Mode::Search => {
-                    editor.search_prompt();
+                    self.search_prompt();
                 }
                 Mode::Save => {
-                    editor.save_prompt();
+                    self.save_prompt();
                 }
                 Mode::Exit => {
-                    editor.output.clear_screen();
-                    return Ok(true);
+                    self.output.clear_screen();
+                    break;
                 }
             }
-            Ok(false)
-        })?;
+        }
         Ok(())
     }
 
@@ -390,25 +389,24 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         C: FnMut(&mut Self, Key, &String),
     {
         let mut message = String::new();
-        let mut res = None;
-        self.looper(|editor| {
-            editor.message = Some(Message::new(format!("{}: {} ({})", desc1, message, desc2)));
-            editor.refresh_screen()?;
-
-            let key = editor.input.wait_for_key();
+        loop {
+            self.message = Some(Message::new(format!("{}: {} ({})", desc1, message, desc2)));
+            if self.refresh_screen().is_err() {
+                return None;
+            }
+            let key = self.input.wait_for_key();
             match key {
                 Key::Escape => {
-                    editor.message = None;
-                    return Ok(true);
+                    self.message = None;
+                    return None;
                 }
                 Key::Del | Key::Backspace => {
                     message.pop();
                 }
                 Key::Enter => {
                     if message.len() != 0 {
-                        editor.message = None;
-                        res = Some(message.clone());
-                        return Ok(true);
+                        self.message = None;
+                        return Some(message);
                     }
                 }
                 Key::Char(c) | Key::CharUtf8(c) => {
@@ -416,23 +414,8 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 }
                 _ => {}
             }
-            cb(editor, key, &message);
-            Ok(false)
-        });
-        res
-    }
-
-    fn looper<C>(&mut self, mut cb: C) -> Result<(), Error>
-    where
-        C: FnMut(&mut Self) -> Result<bool, Error>,
-    {
-        loop {
-            let quit = cb(self)?;
-            if quit {
-                break;
-            }
+            cb(self, key, &message);
         }
-        Ok(())
     }
 
     fn draw_rows(&mut self) -> Vec<String> {
