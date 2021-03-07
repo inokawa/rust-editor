@@ -1,8 +1,7 @@
 use super::{
     ansi_escape::*,
     editor::{Position, SearchDirection},
-    languages::Language,
-    tokenizer::*,
+    languages::*,
 };
 use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;

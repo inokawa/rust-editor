@@ -4,7 +4,6 @@ mod document;
 mod editor;
 mod error;
 mod languages;
-mod tokenizer;
 mod traits;
 
 pub use ansi_escape::*;
