@@ -4,19 +4,20 @@ import * as Comlink from "comlink";
 import { WasmWorker } from "./worker";
 
 const term = new Terminal();
+term.open(document.getElementById("terminal") as HTMLElement);
+(window as any).term = term;
+
 const wasm = Comlink.wrap(
   new Worker("./worker.ts", { name: "wasm", type: "module" })
 ) as WasmWorker;
 
 (async () => {
-  term.open(document.getElementById("terminal") as HTMLElement);
-  (window as any).term = term;
-
   term.onKey(async (e) => {
     console.log(e);
     const event = e.domEvent;
+    if (event.isComposing) return;
     await wasm.send_key(
-      event.code,
+      event.key,
       event.ctrlKey,
       event.shiftKey,
       event.altKey,

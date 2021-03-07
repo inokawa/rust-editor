@@ -1,3 +1,4 @@
+use super::xterm;
 use core::{Error, Input, Key};
 
 pub struct WebInput {}
@@ -8,8 +9,6 @@ impl Input for WebInput {
     }
 
     fn wait_for_key(&self) -> Key {
-        loop {
-            return Key::Char('a');
-        }
+        xterm::xterm_read()
     }
 }

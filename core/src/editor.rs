@@ -134,7 +134,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
-        loop {
+        // loop {
             self.refresh_screen()?;
             match self.process_key_press()? {
                 Mode::Edit => {}
@@ -146,10 +146,10 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 }
                 Mode::Exit => {
                     self.output.clear_screen();
-                    break;
+                    // break; TODO
                 }
             }
-        }
+        // }
         Ok(())
     }
 
