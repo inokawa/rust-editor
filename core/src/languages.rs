@@ -6,8 +6,9 @@ pub struct Token {
     pub highlight: Highlight,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Highlight {
+    Comment,
     String,
     Number,
     None,
@@ -16,6 +17,7 @@ pub enum Highlight {
 impl Highlight {
     pub fn color(&self) -> &str {
         match self {
+            Highlight::Comment => COLOR_CYAN,
             Highlight::String => COLOR_MAGENTA,
             Highlight::Number => COLOR_RED,
             Highlight::None => COLOR_DEFAULT,

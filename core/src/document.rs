@@ -371,7 +371,22 @@ impl Row {
         let mut is_prev_sep = true;
         let mut in_string = "";
         let mut prev_highlight = Highlight::None;
-        self.string.graphemes(true).enumerate().for_each(|(i, s)| {
+        let graphemes: Vec<&str> = self.string.graphemes(true).collect();
+        let mut index = 0;
+        while let Some(&s) = graphemes.get(index) {
+            let ns: &str = graphemes.get(index + 1).unwrap_or(&"");
+            let i = index;
+            index += 1;
+            if in_string == "" && s == "/" && ns == "/" {
+                for ci in i..graphemes.len() {
+                    highlight.push(Token {
+                        index: ci,
+                        highlight: Highlight::Comment,
+                    });
+                }
+                prev_highlight = Highlight::Comment;
+                continue;
+            }
             if flags.contains(&&Highlight::String) {
                 if in_string != "" {
                     highlight.push(Token {
@@ -383,7 +398,7 @@ impl Row {
                     }
                     is_prev_sep = true;
                     prev_highlight = Highlight::String;
-                    return;
+                    continue;
                 } else {
                     if s == "\"" || s == "'" {
                         highlight.push(Token {
@@ -392,7 +407,7 @@ impl Row {
                         });
                         in_string = s;
                         prev_highlight = Highlight::String;
-                        return;
+                        continue;
                     }
                 }
             }
@@ -406,13 +421,13 @@ impl Row {
                     });
                     prev_highlight = Highlight::Number;
                     is_prev_sep = false;
-                    return;
+                    continue;
                 }
             }
 
             prev_highlight = Highlight::None;
             is_prev_sep = is_separator(s);
-        });
+        }
         self.highlight = highlight;
     }
 
