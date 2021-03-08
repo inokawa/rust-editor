@@ -1,6 +1,6 @@
 import * as Comlink from "comlink";
 
-let keys: string[] = [];
+const keys: string[] = [];
 
 let wasm: typeof import("../pkg/index.js");
 const worker = {
@@ -14,8 +14,8 @@ const worker = {
     };
     wasm = await import("../pkg/index.js");
   },
-  send_key: async (...args: any[]) => {
-    keys.push(args[0]);
+  send_key: async (key: string) => {
+    keys.push(key);
   },
 };
 

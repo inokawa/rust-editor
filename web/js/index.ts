@@ -13,17 +13,9 @@ const wasm = Comlink.wrap(
 
 (async () => {
   term.onKey(async (e) => {
-    console.log(e);
     const event = e.domEvent;
     if (event.isComposing) return;
-    await wasm.send_key(
-      event.key,
-      event.ctrlKey,
-      event.shiftKey,
-      event.altKey,
-      event.metaKey
-    );
-    console.log("fin");
+    await wasm.send_key(event.key);
   });
   term.onData((e) => {
     console.log(e);
