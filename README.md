@@ -4,7 +4,7 @@
 
 WIP
 
-An implementation of text editor with Rust.
+An implementation of text editor with Rust/WebAssembly.
 
 This is a hobby project just for my study, but I'm trying to make it as much as practical.
 
@@ -12,6 +12,9 @@ This editor is roughly based on [kilo](https://github.com/antirez/kilo), but has
 
 - Support ASCII/UTF-8 encoded texts
 - Support Undo/Redo
+- Run on terminal in UNIX, and on browser with WebAssembly
+
+NOTE: Some features are not implemented completely.
 
 ## Start
 
