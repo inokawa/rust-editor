@@ -32,6 +32,14 @@ cd rust-editor
 cargo run "path/to/file.txt"
 ```
 
+| Shortcuts | Action |
+| --------- | ------ |
+| Ctrl+Z    | Undo   |
+| Ctrl+Y    | Redo   |
+| Ctrl+F    | Search |
+| Ctrl+S    | Save   |
+| Ctrl+Q    | Quit   |
+
 ### Web
 
 ```sh
