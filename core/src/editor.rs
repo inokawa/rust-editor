@@ -133,24 +133,22 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         res
     }
 
-    pub fn run(&mut self) -> Result<(), Error> {
-        // loop {
-            self.refresh_screen()?;
-            match self.process_key_press()? {
-                Mode::Edit => {}
-                Mode::Search => {
-                    self.search_prompt();
-                }
-                Mode::Save => {
-                    self.save_prompt();
-                }
-                Mode::Exit => {
-                    self.output.clear_screen();
-                    // break; TODO
-                }
+    pub fn run(&mut self) -> Result<bool, Error> {
+        self.refresh_screen()?;
+        match self.process_key_press()? {
+            Mode::Edit => {}
+            Mode::Search => {
+                self.search_prompt();
             }
-        // }
-        Ok(())
+            Mode::Save => {
+                self.save_prompt();
+            }
+            Mode::Exit => {
+                self.output.clear_screen();
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
     fn refresh_screen(&mut self) -> Result<(), Error> {
