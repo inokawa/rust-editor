@@ -14,9 +14,6 @@ pub fn xterm_write(text: &str) {
     write(text);
 }
 
-pub fn xterm_read() -> Key {
-    match get_key() {
-        Some(s) => Key::Char(s.chars().next().unwrap()),
-        None => Key::Unknown,
-    }
+pub fn xterm_read() -> Option<String> {
+    get_key()
 }
