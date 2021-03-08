@@ -6,6 +6,8 @@ WIP
 
 An implementation of text editor with Rust/WebAssembly.
 
+<img src="./example.gif" height="400px" />
+
 This is a hobby project just for my study, but I'm trying to make it as much as practical.
 
 This editor is roughly based on [kilo](https://github.com/antirez/kilo), but has some improvements.
