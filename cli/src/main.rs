@@ -9,5 +9,11 @@ fn main() -> Result<(), Error> {
     if let Some(filename) = args.get(1) {
         editor.load(filename)?;
     }
-    editor.run()
+    loop {
+        let quit = editor.run()?;
+        if quit {
+            break;
+        }
+    }
+    Ok(())
 }
