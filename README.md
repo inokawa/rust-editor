@@ -1,6 +1,6 @@
 # rust-editor
 
-![deploy](https://github.com/inokawa/rust-editor/workflows/check/badge.svg)
+![deploy](https://github.com/inokawa/rust-editor/workflows/check/badge.svg)[![demo](https://github.com/inokawa/rust-editor/actions/workflows/demo.yml/badge.svg)](https://github.com/inokawa/rust-editor/actions/workflows/demo.yml)
 
 WIP
 
@@ -16,12 +16,27 @@ This editor is roughly based on [kilo](https://github.com/antirez/kilo), but has
 
 NOTE: Some features are not implemented completely.
 
+## Demo
+
+https://inokawa.github.io/rust-editor/
+
 ## Start
+
+### CLI
 
 ```sh
 git clone git@github.com:inokawa/rust-editor.git
 cd rust-editor
 cargo run "path/to/file.txt"
+```
+
+### Web
+
+```sh
+git clone git@github.com:inokawa/rust-editor.git
+cd rust-editor/web
+npm install
+npm start
 ```
 
 ## References
