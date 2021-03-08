@@ -5,6 +5,7 @@ import { WasmWorker } from "./worker";
 
 const term = new Terminal();
 term.open(document.getElementById("terminal") as HTMLElement);
+term.resize(100, 40);
 (window as any).term = term;
 
 const wasm = Comlink.wrap(

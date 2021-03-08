@@ -27,7 +27,7 @@ impl Output for WebOutput {
     }
 
     fn get_window_size(&self) -> Option<(usize, usize)> {
-        Some((20, 80))
+        Some((40, 100))
         // if let Some(win) = window() {
         //     match (win.inner_width(), win.inner_height()) {
         //         (Ok(w), Ok(h)) => match (w.as_f64(), h.as_f64()) {
