@@ -1,6 +1,6 @@
 import * as Comlink from "comlink";
 
-const keys: string[] = [];
+const keys: { key: string; ctrl: boolean }[] = [];
 
 let wasm: typeof import("../pkg/index.js");
 const worker = {
@@ -9,13 +9,13 @@ const worker = {
       write,
       get_key: () => {
         const key = keys.shift();
-        return key;
+        return key?.key;
       },
     };
     wasm = await import("../pkg/index.js");
   },
-  send_key: async (key: string) => {
-    keys.push(key);
+  send_key: async (key: string, ctrl: boolean) => {
+    keys.push({ key, ctrl });
   },
 };
 

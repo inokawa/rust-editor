@@ -18,12 +18,12 @@ const wasm = Comlink.wrap(
     prevKey = e.key;
     const event = e.domEvent;
     if (event.isComposing) return;
-    await wasm.send_key(event.key);
+    await wasm.send_key(event.key, event.ctrlKey);
   });
   term.onData(async (data) => {
     if (data === prevKey) return;
     for (const d of data.split("")) {
-      await wasm.send_key(d);
+      await wasm.send_key(d, false);
     }
   });
 
