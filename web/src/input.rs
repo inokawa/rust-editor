@@ -23,6 +23,7 @@ impl Input for WebInput {
                 "ArrowDown" => Key::Arrow(Arrow::Down),
                 "ArrowLeft" => Key::Arrow(Arrow::Left),
                 "ArrowRight" => Key::Arrow(Arrow::Right),
+                "Tab" => Key::Char('\t'),
                 _ => Key::Char(s.chars().next().unwrap()),
             },
             None => Key::Unknown,
