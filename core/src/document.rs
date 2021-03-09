@@ -462,10 +462,7 @@ impl Row {
     }
 
     pub fn len(&self) -> usize {
-        self.string.graphemes(true).fold(0, |acc, s| match s {
-            "\t" => acc + 1 * TAB_STOP,
-            _ => acc + 1,
-        })
+        self.string.graphemes(true).count()
     }
 
     fn insert(&mut self, c: char, at: usize) {
