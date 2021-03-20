@@ -9,7 +9,7 @@ term.resize(100, 40);
 (window as any).term = term;
 
 const wasm = Comlink.wrap(
-  new Worker("./worker.ts", { name: "wasm", type: "module" })
+  new Worker(new URL("./worker.ts", import.meta.url), { name: "wasm" })
 ) as WasmWorker;
 
 (async () => {
