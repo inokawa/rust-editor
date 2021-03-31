@@ -25,7 +25,7 @@ futures = "0.3.13"
 wasm-bindgen-futures = "0.4.21"
 
 [dependencies.web-sys]
-version = "0.3.48"
+version = "0.3.50"
 features = ["WorkerGlobalScope"]
 
 [target."cfg(debug_assertions)".dependencies]
