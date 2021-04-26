@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 core = { path = "../core" }
-libc = "0.2.86"
+libc = "0.2.94"
