@@ -19,7 +19,7 @@ lto = true
 [dependencies]
 core = { path = "../core" }
 js-sys = "0.3.51"
-wasm-bindgen = "0.2.71"
+wasm-bindgen = "0.2.74"
 wee_alloc = { version = "0.4.5", optional = true }
 futures = "0.3.15"
 wasm-bindgen-futures = "0.4.21"
