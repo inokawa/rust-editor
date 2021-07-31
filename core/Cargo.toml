@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 unicode-segmentation = "1.7.1"
 unicode-width = "0.1.8"
-instant = { version = "0.1.9", features = [ "wasm-bindgen" ] }
+instant = { version = "0.1.10", features = [ "wasm-bindgen" ] }
