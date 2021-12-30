@@ -27,18 +27,7 @@ impl Output for WebOutput {
     }
 
     fn get_window_size(&self) -> Option<(usize, usize)> {
-        Some((40, 100))
-        // if let Some(win) = window() {
-        //     match (win.inner_width(), win.inner_height()) {
-        //         (Ok(w), Ok(h)) => match (w.as_f64(), h.as_f64()) {
-        //             (Some(w), Some(h)) => Some((w as usize, h as usize)),
-        //             (_, _) => None,
-        //         },
-        //         (_, _) => None,
-        //     }
-        // } else {
-        //     None
-        // }
+        Some(xterm::xterm_get_window_size())
     }
 }
 

@@ -30,6 +30,8 @@ const wasm = Comlink.wrap(
   await wasm.init(
     Comlink.proxy((data) => {
       term.write(data);
-    })
+    }),
+    term.cols,
+    term.rows
   );
 })();
