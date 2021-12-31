@@ -21,7 +21,7 @@ core = { path = "../core" }
 js-sys = "0.3.55"
 wasm-bindgen = "0.2.76"
 wee_alloc = { version = "0.4.5", optional = true }
-futures = "0.3.18"
+futures = "0.3.19"
 wasm-bindgen-futures = "0.4.26"
 
 [dependencies.web-sys]
