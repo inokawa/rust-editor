@@ -2,10 +2,10 @@
   "extends": ["config:base"],
   "timezone": "Asia/Tokyo",
   "schedule": ["monthly"],
-  "packageRules": [
-    {
-      "matchUpdateTypes": ["patch"],
-      "automerge": true
-    }
-  ]
+  "minor": {
+    "automerge": true
+  },
+  "patch": {
+    "automerge": true
+  }
 }
