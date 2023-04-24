@@ -41,6 +41,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      - name: Install wasm-pack
+        run: cargo install wasm-pack@0.9.1
+
       - run: cd web && npm ci
       - run: cd web && npm run build
 
