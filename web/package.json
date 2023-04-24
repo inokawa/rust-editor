@@ -9,7 +9,7 @@
     "test": "cargo test && wasm-pack test --headless"
   },
   "devDependencies": {
-    "@wasm-tool/wasm-pack-plugin": "1.6.0",
+    "@wasm-tool/wasm-pack-plugin": "1.7.0",
     "copy-webpack-plugin": "5.1.2",
     "css-loader": "5.2.7",
     "rimraf": "3.0.2",
