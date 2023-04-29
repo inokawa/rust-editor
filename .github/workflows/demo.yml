@@ -23,6 +23,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "lts/*"
+          cache: "npm"
+          cache-dependency-path: "web/package-lock.json"
 
       - name: Cache cargo
         uses: actions/cache@v2
@@ -32,14 +34,6 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache npm
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Install wasm-pack
         run: cargo install wasm-pack@0.9.1
