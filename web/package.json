@@ -22,6 +22,6 @@
   },
   "dependencies": {
     "comlink": "4.4.1",
-    "xterm": "4.10.0"
+    "xterm": "4.19.0"
   }
 }
