@@ -13,7 +13,7 @@
     "copy-webpack-plugin": "5.1.2",
     "css-loader": "5.2.7",
     "rimraf": "5.0.5",
-    "style-loader": "2.0.0",
+    "style-loader": "3.3.3",
     "ts-loader": "9.5.0",
     "typescript": "4.9.5",
     "webpack": "5.88.2",
