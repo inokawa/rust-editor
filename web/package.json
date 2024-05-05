@@ -9,16 +9,16 @@
     "test": "cargo test && wasm-pack test --headless"
   },
   "devDependencies": {
-    "@wasm-tool/wasm-pack-plugin": "1.7.0",
-    "copy-webpack-plugin": "5.1.2",
-    "css-loader": "5.2.7",
-    "rimraf": "5.0.5",
-    "style-loader": "3.3.4",
-    "ts-loader": "9.5.1",
-    "typescript": "5.3.3",
-    "webpack": "5.90.3",
-    "webpack-cli": "4.10.0",
-    "webpack-dev-server": "3.11.3"
+    "@wasm-tool/wasm-pack-plugin": "^1.7.0",
+    "copy-webpack-plugin": "^5.1.2",
+    "css-loader": "^5.2.7",
+    "rimraf": "^5.0.5",
+    "style-loader": "^3.3.4",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.90.3",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^3.11.3"
   },
   "dependencies": {
     "comlink": "4.4.1",
