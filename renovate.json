@@ -1,9 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "schedule:monthly"],
+  "extends": [
+    "config:recommended",
+    "schedule:monthly",
+    ":preserveSemverRanges",
+    ":automergeMinor",
+    ":maintainLockFilesMonthly"
+  ],
   "timezone": "Asia/Tokyo",
-  "automerge": true,
-  "major": {
-    "automerge": false
-  }
+  "configMigration": true
 }
