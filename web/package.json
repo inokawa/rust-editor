@@ -18,7 +18,7 @@
     "typescript": "^5.3.3",
     "webpack": "^5.90.3",
     "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^3.11.3"
+    "webpack-dev-server": "^5.0.0"
   },
   "dependencies": {
     "comlink": "4.4.1",
