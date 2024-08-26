@@ -14,10 +14,12 @@ module.exports = {
     filename: "[name].js",
   },
   devServer: {
-    contentBase: dist,
+    static: {
+      directory: dist,
+    },
   },
   plugins: [
-    new CopyPlugin([path.resolve(__dirname, "static")]),
+    new CopyPlugin({ patterns: [path.resolve(__dirname, "static")] }),
     new WasmPackPlugin({
       crateDirectory: __dirname,
     }),
