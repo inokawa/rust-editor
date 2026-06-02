@@ -11,7 +11,8 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": false
   },
   "include": ["js"],
   "exclude": ["node_modules", "js/**/*.spec.*"]
