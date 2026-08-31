@@ -14,8 +14,8 @@
     "css-loader": "^7.1.2",
     "rimraf": "^6.0.0",
     "style-loader": "^4.0.0",
-    "ts-loader": "^9.5.1",
-    "typescript": "^6.0.0",
+    "ts-loader": "^9.6.2",
+    "typescript": "^7.0.0",
     "webpack": "^5.90.3",
     "webpack-cli": "^7.0.0",
     "webpack-dev-server": "^6.0.0"
