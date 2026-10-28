@@ -16,8 +16,6 @@ This editor is roughly based on [kilo](https://github.com/antirez/kilo), but has
 - Support Undo/Redo
 - Run on terminal in UNIX, and on browser with WebAssembly
 
-NOTE: Some features are not implemented completely.
-
 ## Demo
 
 https://inokawa.github.io/rust-editor/
@@ -48,6 +46,12 @@ cd rust-editor/web
 npm install
 npm start
 ```
+
+Shortcuts are the same as CLI (Cmd also works instead of Ctrl on macOS, except Cmd+Q).
+
+- Open: drop a file onto the page
+- Save: downloads the file
+- Quit: stops the editor, reload the page to restart
 
 ## References
 

@@ -35,9 +35,6 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install wasm-pack
-        run: cargo install wasm-pack@0.15.0
-
       - run: cd web && npm ci
       - run: cd web && npm run build
 

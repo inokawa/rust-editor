@@ -1,7 +1,7 @@
 [package]
 name = "web"
 description = "My super awesome Rust, WebAssembly, and Webpack project!"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["You <you@example.com>"]
 categories = ["wasm"]
 readme = "README.md"

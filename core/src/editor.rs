@@ -5,6 +5,8 @@ use super::{
 };
 use instant::Instant;
 use std::{cmp, time::Duration};
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -29,6 +31,7 @@ pub enum Command {
     Redo,
     Save,
     Exit,
+    Open(String),
 }
 
 pub enum Page {
@@ -43,9 +46,20 @@ pub enum Arrow {
     Right,
 }
 
+#[derive(PartialEq)]
 struct Screen {
     rows: usize,
     cols: usize,
+}
+
+impl Screen {
+    fn new(window_rows: usize, window_cols: usize) -> Screen {
+        // Reserve 2 rows for status bar and message bar
+        Screen {
+            rows: cmp::max(window_rows.saturating_sub(2), 1),
+            cols: cmp::max(window_cols, 1),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -80,6 +94,30 @@ enum Mode {
     Exit,
 }
 
+enum PromptKind {
+    Save,
+    Search {
+        origin: Position,
+        direction: SearchDirection,
+    },
+}
+
+// Prompts are processed one key per `run()` so that hosts which can't block on input (e.g. Web) keep responsive.
+struct Prompt {
+    kind: PromptKind,
+    input: String,
+}
+
+impl Prompt {
+    fn text(&self) -> String {
+        let (desc1, desc2) = match self.kind {
+            PromptKind::Save => ("Save as", "ESC to cancel"),
+            PromptKind::Search { .. } => ("Search", "Use ESC/Arrows/Enter"),
+        };
+        format!("{}: {} ({})", desc1, self.input, desc2)
+    }
+}
+
 pub struct Editor<I: Input, O: Output, F: Filer> {
     input: I,
     output: O,
@@ -90,6 +128,7 @@ pub struct Editor<I: Input, O: Output, F: Filer> {
     col_offset: usize,
     document: Document,
     message: Option<Message>,
+    prompt: Option<Prompt>,
     confirm: bool,
 }
 
@@ -100,10 +139,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 input,
                 output,
                 filer,
-                screen: Screen {
-                    rows: screen_rows - 2,
-                    cols: screen_cols,
-                },
+                screen: Screen::new(screen_rows, screen_cols),
                 cursor: Position { x: 0, y: 0 },
                 row_offset: 0,
                 col_offset: 0,
@@ -111,6 +147,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                 message: Some(Message::new(
                     "HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find",
                 )),
+                prompt: None,
                 confirm: false,
             })
         } else {
@@ -121,6 +158,11 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     pub fn load(&mut self, filename: &String) -> Result<&mut Self, Error> {
         let file = self.filer.load(&filename)?;
         self.document = Document::open(filename.clone(), file);
+        self.cursor = Position { x: 0, y: 0 };
+        self.row_offset = 0;
+        self.col_offset = 0;
+        self.prompt = None;
+        self.confirm = false;
         Ok(self)
     }
 
@@ -135,7 +177,20 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     pub fn run(&mut self) -> Result<bool, Error> {
         self.refresh_screen()?;
-        match self.process_key_press()? {
+        let key = self.input.wait_for_key();
+        if let Key::Command(Command::Open(filename)) = key {
+            self.cancel_prompt();
+            self.message = Some(match self.load(&filename) {
+                Ok(_) => Message::new(format!("Opened {}", filename)),
+                Err(_) => Message::new(format!("Could not open {}", filename)),
+            });
+            return Ok(false);
+        }
+        if let Some(prompt) = self.prompt.take() {
+            self.process_prompt_key(prompt, key);
+            return Ok(false);
+        }
+        match self.process_key_press(key)? {
             Mode::Edit => {}
             Mode::Search => {
                 self.search_prompt();
@@ -152,6 +207,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     fn refresh_screen(&mut self) -> Result<(), Error> {
+        self.update_screen_size();
         self.scroll();
         self.document.update_highlights();
 
@@ -178,6 +234,16 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         Ok(())
     }
 
+    fn update_screen_size(&mut self) {
+        if let Some((rows, cols)) = self.output.get_window_size() {
+            let screen = Screen::new(rows, cols);
+            if screen != self.screen {
+                self.screen = screen;
+                self.output.clear_screen();
+            }
+        }
+    }
+
     fn scroll(&mut self) {
         if self.cursor.y < self.row_offset {
             self.row_offset = self.cursor.y;
@@ -193,9 +259,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
         }
     }
 
-    fn process_key_press(&mut self) -> Result<Mode, Error> {
+    fn process_key_press(&mut self, key: Key) -> Result<Mode, Error> {
         let mut pressed = true;
-        match self.input.wait_for_key() {
+        match key {
             Key::Escape => {}
             Key::Enter => {
                 self.document.insert_newline(&self.cursor);
@@ -263,6 +329,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
                         return Ok(Mode::Exit);
                     }
                 }
+                Command::Open(_) => {}
             },
             Key::Char(c) | Key::CharUtf8(c) => {
                 self.document.insert(c, &self.cursor);
@@ -330,13 +397,16 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     fn save_prompt(&mut self) {
         if self.document.get_filename().is_none() {
-            let filename = self.prompt("Save as", "ESC to cancel", |_, _, _| {});
-            if filename.is_none() {
-                self.message = Some(Message::new("Save aborted"));
-                return;
-            }
-            self.document.set_filename(filename);
+            self.prompt = Some(Prompt {
+                kind: PromptKind::Save,
+                input: String::new(),
+            });
+            return;
         }
+        self.save_with_message();
+    }
+
+    fn save_with_message(&mut self) {
         self.message = match self.save() {
             Ok(_) => Some(Message::new("File saved successfully.")),
             Err(_) => Some(Message::new("Error writing file!")),
@@ -344,73 +414,87 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
     }
 
     fn search_prompt(&mut self) {
-        let cursor = self.cursor.clone();
-        let mut direction = SearchDirection::Forward;
-        let res = self.prompt("Search", "Use ESC/Arrows/Enter", |editor, key, query| {
-            let mut moved = false;
-            match key {
-                Key::Arrow(Arrow::Left) | Key::Arrow(Arrow::Up) => {
-                    direction = SearchDirection::Backward;
-                    editor.move_cursor(&Arrow::Left);
-                    moved = true;
-                }
-                Key::Arrow(Arrow::Right) | Key::Arrow(Arrow::Down) => {
-                    direction = SearchDirection::Forward;
-                    editor.move_cursor(&Arrow::Right);
-                    moved = true;
-                }
-                _ => {
-                    direction = SearchDirection::Forward;
-                }
-            }
-
-            if let Some(pos) = editor.document.find(&query, &editor.cursor, &direction) {
-                editor.cursor = pos;
-                editor.scroll();
-            } else if moved == true {
-                match direction {
-                    SearchDirection::Forward => editor.move_cursor(&Arrow::Left),
-                    SearchDirection::Backward => editor.move_cursor(&Arrow::Right),
-                }
-            }
+        self.prompt = Some(Prompt {
+            kind: PromptKind::Search {
+                origin: self.cursor.clone(),
+                direction: SearchDirection::Forward,
+            },
+            input: String::new(),
         });
-        if res.is_none() {
-            self.cursor = cursor;
-            self.scroll();
+    }
+
+    fn cancel_prompt(&mut self) {
+        if let Some(prompt) = self.prompt.take() {
+            match prompt.kind {
+                PromptKind::Save => {
+                    self.message = Some(Message::new("Save aborted"));
+                }
+                PromptKind::Search { origin, .. } => {
+                    self.message = None;
+                    self.cursor = origin;
+                    self.scroll();
+                }
+            }
         }
     }
 
-    fn prompt<C>(&mut self, desc1: &str, desc2: &str, mut cb: C) -> Option<String>
-    where
-        C: FnMut(&mut Self, Key, &String),
-    {
-        let mut message = String::new();
-        loop {
-            self.message = Some(Message::new(format!("{}: {} ({})", desc1, message, desc2)));
-            if self.refresh_screen().is_err() {
-                return None;
+    fn process_prompt_key(&mut self, mut prompt: Prompt, key: Key) {
+        match key {
+            Key::Escape => {
+                self.prompt = Some(prompt);
+                self.cancel_prompt();
+                return;
             }
-            let key = self.input.wait_for_key();
-            match key {
-                Key::Escape => {
+            Key::Del | Key::Backspace => {
+                prompt.input.pop();
+            }
+            Key::Enter => {
+                if prompt.input.len() != 0 {
                     self.message = None;
-                    return None;
-                }
-                Key::Del | Key::Backspace => {
-                    message.pop();
-                }
-                Key::Enter => {
-                    if message.len() != 0 {
-                        self.message = None;
-                        return Some(message);
+                    if let PromptKind::Save = prompt.kind {
+                        self.document.set_filename(Some(prompt.input));
+                        self.save_with_message();
                     }
+                    return;
                 }
-                Key::Char(c) | Key::CharUtf8(c) => {
-                    message.push(c);
-                }
-                _ => {}
             }
-            cb(self, key, &message);
+            Key::Char(c) | Key::CharUtf8(c) => {
+                prompt.input.push(c);
+            }
+            _ => {}
+        }
+        if let PromptKind::Search { direction, .. } = &mut prompt.kind {
+            self.search_step(&key, direction, &prompt.input);
+        }
+        self.prompt = Some(prompt);
+    }
+
+    fn search_step(&mut self, key: &Key, direction: &mut SearchDirection, query: &String) {
+        let mut moved = false;
+        match key {
+            Key::Arrow(Arrow::Left) | Key::Arrow(Arrow::Up) => {
+                *direction = SearchDirection::Backward;
+                self.move_cursor(&Arrow::Left);
+                moved = true;
+            }
+            Key::Arrow(Arrow::Right) | Key::Arrow(Arrow::Down) => {
+                *direction = SearchDirection::Forward;
+                self.move_cursor(&Arrow::Right);
+                moved = true;
+            }
+            _ => {
+                *direction = SearchDirection::Forward;
+            }
+        }
+
+        if let Some(pos) = self.document.find(query, &self.cursor, direction) {
+            self.cursor = pos;
+            self.scroll();
+        } else if moved == true {
+            match direction {
+                SearchDirection::Forward => self.move_cursor(&Arrow::Left),
+                SearchDirection::Backward => self.move_cursor(&Arrow::Right),
+            }
         }
     }
 
@@ -448,10 +532,7 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             &self
                 .document
                 .get_filename()
-                .map(|mut n| {
-                    n.truncate(20);
-                    n
-                })
+                .map(|n| truncate_width(&n, 20))
                 .unwrap_or(String::from("[No Name]")),
             self.document.len(),
             if self.document.is_dirty() {
@@ -466,8 +547,9 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
             self.cursor.y,
             self.document.len()
         );
+        let left = truncate_width(&left, self.screen.cols);
         let rlen = right.len();
-        let mut len = cmp::min(left.len(), self.screen.cols);
+        let mut len = UnicodeWidthStr::width(left.as_str());
         buf.push_str(&left);
         while len < self.screen.cols {
             if self.screen.cols - len == rlen {
@@ -483,15 +565,28 @@ impl<I: Input, O: Output, F: Filer> Editor<I, O, F> {
 
     fn draw_message_bar(&self) -> String {
         let mut buf = String::new();
-        if let Some(message) = &self.message {
+        if let Some(prompt) = &self.prompt {
+            buf.push_str(&truncate_width(&prompt.text(), self.screen.cols));
+        } else if let Some(message) = &self.message {
             if Instant::now() - message.time < Duration::new(5, 0) {
-                let mut text = message.text.clone();
-                text.truncate(self.screen.cols);
-                buf.push_str(&text);
+                buf.push_str(&truncate_width(&message.text, self.screen.cols));
             }
         }
         buf
     }
+}
+
+fn truncate_width(s: &str, width: usize) -> String {
+    let mut buf = String::new();
+    let mut w = 0;
+    for g in s.graphemes(true) {
+        w += UnicodeWidthStr::width(g);
+        if w > width {
+            break;
+        }
+        buf.push_str(g);
+    }
+    buf
 }
 
 fn create_welcome_message(width: usize) -> String {
