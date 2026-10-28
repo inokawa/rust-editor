@@ -7,6 +7,22 @@
       body {
         margin: 0;
         padding: 0;
+        overflow: hidden;
+      }
+      #terminal {
+        width: 100vw;
+        height: 100vh;
+      }
+      /* Let xterm paint the leftover below the last row with the theme background */
+      #terminal .xterm {
+        height: 100%;
+      }
+      body.dragging::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        border: 4px dashed #888;
+        pointer-events: none;
       }
     </style>
   </head>

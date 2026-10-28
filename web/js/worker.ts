@@ -1,28 +1,43 @@
 import * as Comlink from "comlink";
+import type { InputEvent, MainThreadApi } from "./protocol";
 
-const keys: [key: string, ctrl: boolean][] = [];
+const events: InputEvent[] = [];
+const size = { cols: 0, rows: 0 };
+const files = new Map<string, string>();
 
-let wasm: typeof import("../pkg/index.js");
 const worker = {
-  init: async (write: (str: string) => void, cols: number, rows: number) => {
-    (self as any).term = {
-      write,
-      read_key: () => {
-        return keys[0]?.[0];
+  init: async (main: MainThreadApi, cols: number, rows: number) => {
+    worker.resize(cols, rows);
+    // Globals bound by `web/src/*.rs` through `js_namespace`
+    Object.assign(self, {
+      term: {
+        write: (data: string) => main.write(data),
+        get_col_size: () => size.cols,
+        get_row_size: () => size.rows,
       },
-      read_ctrl: () => {
-        return keys[0]?.[1] ?? false;
+      input: {
+        next: (): InputEvent | undefined => events.shift(),
       },
-      read_end: () => {
-        keys.shift();
+      fs: {
+        read: (filename: string): string | undefined => files.get(filename),
+        write: (filename: string, content: string) => {
+          files.set(filename, content);
+          main.download(filename, content);
+        },
       },
-      get_col_size: () => cols,
-      get_row_size: () => rows,
-    };
-    wasm = await import("../pkg/index.js");
+    });
+    await import("../pkg/index.js");
   },
-  send_key: async (key: string, ctrl: boolean) => {
-    keys.push([key, ctrl]);
+  resize: (cols: number, rows: number) => {
+    size.cols = cols;
+    size.rows = rows;
+  },
+  send: (event: InputEvent) => {
+    events.push(event);
+  },
+  open: (filename: string, content: string) => {
+    files.set(filename, content);
+    events.push({ kind: "open", value: filename });
   },
 };
 
